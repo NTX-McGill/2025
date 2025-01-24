@@ -1,3 +1,4 @@
+from constants import *
 import pylsl
 import time
 import threading
@@ -148,21 +149,23 @@ def find_marker_inlet(debug=False):
 class CSVDataRecorder:
     """Class to record EEG and marker data to a CSV file."""
 
-    def __init__(self, find_streams=True):
+    def __init__(self, find_streams=True, num_imgs=20):
         self.eeg_inlet = find_bci_inlet() if find_streams else None
-        self.marker_inlet = find_marker_inlet() if find_streams else None
+        self.state_input = find_marker_inlet() if find_streams else None
 
         self.recording = False
-        self.ready = self.eeg_inlet is not None and self.marker_inlet is not None
+        self.ready = self.eeg_inlet is not None and self.state_input is not None
 
         if self.ready:
             logger.info("Ready to start recording.")
+        
+        self.num_imgs = num_imgs
 
     def find_streams(self):
         """Find EEG and marker streams. Updates the ready flag."""
         self.find_eeg_inlet()
         self.find_marker_input()
-        self.ready = self.eeg_inlet is not None and self.marker_inlet is not None
+        self.ready = self.eeg_inlet is not None and self.state_input is not None
 
     def find_eeg_inlet(self):
         """Find the EEG stream and update the inlet."""
@@ -171,10 +174,10 @@ class CSVDataRecorder:
 
     def find_marker_input(self):
         """Find the marker stream and update the inlet."""
-        self.marker_inlet = find_marker_inlet(debug=False)
-        logger.info(f"Marker Inlet found:{self.marker_inlet}")
+        self.state_input = find_marker_inlet(debug=False)
+        logger.info(f"Marker Inlet found:{self.state_input}")
 
-        self.ready = self.eeg_inlet is not None and self.marker_inlet is not None
+        self.ready = self.eeg_inlet is not None and self.state_input is not None
 
     def start(self, filename="test_data_0.csv"):
         """Start recording data to a CSV file. The recording will continue until stop() is called.
@@ -186,7 +189,7 @@ class CSVDataRecorder:
         if not self.ready:
             logger.error("Error: not ready to start recording")
             logger.info(f"EEG Inlet:{self.eeg_inlet}")
-            logger.info(f"Marker Inlet:{self.marker_inlet}")
+            logger.info(f"Marker Inlet:{self.state_input}")
             return
 
         self.recording = True
@@ -202,23 +205,20 @@ class CSVDataRecorder:
 
         # Flush the inlets to remove old data
         self.eeg_inlet.flush()
-        self.marker_inlet.flush()
+        self.state_input.flush()
 
         timestamp_list = np.array([])
         channel_lists: typing.List[np.ndarray] = list()
-
-        # see g_markers for the marker values
-        cross_list = np.array([], dtype=np.bool_)
-        beep_list = np.array([], dtype=np.bool_)
-        left_list = np.array([], dtype=np.bool_)
-        right_list = np.array([], dtype=np.bool_)
-        clench_list = np.array([], dtype=np.bool_)
-        rest_list = np.array([], dtype=np.bool_)
-
+        image_id_list = np.array([], dtype=np.int8)
+        status_list = np.array([], dtype=np.int8)
+        
         for i in range(8):
             channel_lists.append(np.array([]))
 
         buffer_size = 0
+        status = STATUS_TRANSITION
+        image = IMAGE_NONE
+
         while self.recording:
             # PROBLEM - we need to merge the two (EEG and Marker) LSL streams into one
             # Assume we never get two markers for one EEG sample
@@ -226,53 +226,37 @@ class CSVDataRecorder:
             # This effectively discards the marker timestamps but the EEG is recorded so quickly that it doesn't matter (?)
 
             eeg_sample, eeg_timestamp = self.eeg_inlet.pull_sample()
-            marker_sample, marker_timestamp = self.marker_inlet.pull_sample(0.0)
+            state_sample, _ = self.state_input.pull_sample(0.0)
 
-            marker = None
-            if marker_sample is not None and marker_sample[0] is not None:
-                marker_string = marker_sample[0]
+            if state_sample is not None and state_sample[0] is not None:
+                has_new_image, new_image, has_new_status, new_status = state_sample
+                if has_new_image:
+                    image = new_image
+                if has_new_status:
+                    status = new_status
 
-                for i in range(len(markers)):
-                    if marker_string == markers[i]:
-                        marker = i
-                        break
-
+            
+            image_id_list = np.append(image_id_list, image)
+            status_list = np.append(status_list, status)
             timestamp_list = np.append(timestamp_list, eeg_timestamp)
             for i in range(8):
                 channel_lists[i] = np.append(channel_lists[i], eeg_sample[i])
-
-            cross_list = np.append(cross_list, marker == 0)
-            beep_list = np.append(beep_list, marker == 1)
-            left_list = np.append(left_list, marker == 2)
-            right_list = np.append(right_list, marker == 3)
-            clench_list = np.append(clench_list, marker == 4)
-            rest_list = np.append(rest_list, marker == 5)
             
             buffer_size += 1
             if buffer_size >= 16384:
-                threading.Thread(target=self._save_buffer, args=[filename, timestamp_list, channel_lists, cross_list,
-                                 beep_list, left_list, right_list, clench_list, rest_list]).start()
+                threading.Thread(target=self._save_buffer, args=[filename, timestamp_list, channel_lists, image_id_list, status_list]).start()
                 buffer_size = 0
                 timestamp_list = np.array([])
                 channel_lists: typing.List[np.ndarray] = list()
-
-                # see g_markers for the marker values
-                cross_list = np.array([], dtype=np.bool_)
-                beep_list = np.array([], dtype=np.bool_)
-                left_list = np.array([], dtype=np.bool_)
-                right_list = np.array([], dtype=np.bool_)
-                clench_list = np.array([], dtype=np.bool_)
-                rest_list = np.array([], dtype=np.bool_)
-
+                image_id_list = np.array([], dtype=np.int8)
+                status_list = np.array([], dtype=np.int8)
                 for i in range(8):
                     channel_lists.append(np.array([]))
 
         print(timestamp_list)
-        self._save_buffer(filename, timestamp_list, channel_lists, cross_list,
-                    beep_list, left_list, right_list, clench_list, rest_list)
+        self._save_buffer(filename, timestamp_list, channel_lists, image_id_list, status_list)
 
-    def _save_buffer(self, filename, timestamp_list, channel_lists, cross_list,
-                    beep_list, left_list, right_list, clench_list, rest_list):
+    def _save_buffer(self, filename, timestamp_list, channel_lists, image_id_list, status_list):
         
         df = pd.DataFrame(
             columns=[
@@ -285,25 +269,27 @@ class CSVDataRecorder:
                 "ch6",
                 "ch7",
                 "ch8",
-                "cross",
-                "beep",
-                "left",
-                "right",
-                "clench",
-                "rest",
+                "image_id",
+                "status",
             ]
         )
 
         df["timestamp"] = timestamp_list
         for i in range(8):
             df[f"ch{i+1}"] = channel_lists[i]
-        df["cross"] = cross_list.astype(np.int8)
-        df["beep"] = beep_list.astype(np.int8)
-        df["left"] = left_list.astype(np.int8)
-        df["right"] = right_list.astype(np.int8)
-        df["clench"] = clench_list.astype(np.int8)
-        df["rest"] = rest_list.astype(np.int8)
 
+        df["transition"] = status_list == STATUS_TRANSITION
+        df["baseline"] = status_list == STATUS_BASELINE
+        df["imagine"] = status_list == STATUS_IMAGINE
+        df["look"] = status_list == STATUS_LOOK
+        df["imagine_eyes_closed"] = status_list == STATUS_IMAGINE_EYES_CLOSED
+        df["done"] = status_list == STATUS_DONE
+
+        for i in range(self.num_imgs):
+            df[f"image_{i}"] = image_id_list == i
+        df["image_none"] = image_id_list == IMAGE_NONE
+
+        
         filepath = Path(f"collected_data/{filename}")
         filepath.parent.mkdir(parents=True, exist_ok=True)
 

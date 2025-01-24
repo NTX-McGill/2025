@@ -5,99 +5,92 @@ import pandas as pd
 import numpy as np
 import typing
 import logging
-from .constants import markers
+# from .constants import markers
 from pathlib import Path
-from einops import rearrange, reduce
+# from einops import rearrange, reduce
 from scipy.signal import filtfilt, iirnotch, butter
 import pickle
-import zmq
-from .pre_processing import csp_preprocess
+# import zmq
+# from .pre_processing import csp_preprocess
 import os
-import torch
-from torch.nn import functional as F
+# import torch
+# from torch.nn import functional as F
 import sys
 import random
-print("\n\n\n")
-print(os.path.dirname(__file__))
-print("\n\n\n")
+# print("\n\n\n")
+# print(os.path.dirname(__file__))
+# print("\n\n\n")
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
+# sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
 
-from siggy_ml.models.diffusion.classification_heads import EEGNetHead
-# Edited from NTX McGill 2021 stream.py, lines 16-23
-# https://github.com/NTX-McGill/NeuroTechX-McGill-2021/blob/main/software/backend/dcp/bci/stream.py
+# # from siggy_ml.models.diffusion.classification_heads import EEGNetHead
+# # Edited from NTX McGill 2021 stream.py, lines 16-23
+# # https://github.com/NTX-McGill/NeuroTechX-McGill-2021/blob/main/software/backend/dcp/bci/stream.py
 logger = logging.getLogger(__name__)
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+# DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def apply_notch(x, y, fs, notch_freq=50):
-    """
-    Apply pre-processing before concatenating everything in a single array.
-    Easier to manage multiple splits
-    By default, it only applies a notch filter at 50 Hz
-    """
+# def apply_notch(x, y, fs, notch_freq=50):
+    # """
+    # Apply pre-processing before concatenating everything in a single array.
+    # Easier to manage multiple splits
+    # By default, it only applies a notch filter at 50 Hz
+    # """
 
-def apply_notch(x, y, fs, notch_freq=50):
-    """
-    Apply pre-processing before concatenating everything in a single array.
-    Easier to manage multiple splits
-    By default, it only applies a notch filter at 50 Hz
-    """
-
-    n, d, t = x.shape
-    x = rearrange(x, "n t d -> (n d) t")
-    b, a = iirnotch(notch_freq, 30, fs)
-    x = filtfilt(b, a, x)
-    x = rearrange(x, "(n d) t -> n t d", n=n)
-    return x, y
+    # n, d, t = x.shape
+    # x = rearrange(x, "n t d -> (n d) t")
+    # b, a = iirnotch(notch_freq, 30, fs)
+    # x = filtfilt(b, a, x)
+    # x = rearrange(x, "(n d) t -> n t d", n=n)
+    # return x, y
 
 
-def bandpass(
-    x,
-    fs,
-    low,
-    high,
-):
+# def bandpass(
+    # x,
+    # fs,
+    # low,
+    # high,
+# ):
 
-    nyquist = fs / 2
-    b, a = butter(4, [low / nyquist, high / nyquist], "bandpass", analog=False)
-    n, d, t = x.shape
-    x = rearrange(x, "n t d -> (n d) t")
-    x = filtfilt(b, a, x)
-    x = rearrange(x, "(n d) t -> n t d", n=n)
-    return x
+    # nyquist = fs / 2
+    # b, a = butter(4, [low / nyquist, high / nyquist], "bandpass", analog=False)
+    # n, d, t = x.shape
+    # x = rearrange(x, "n t d -> (n d) t")
+    # x = filtfilt(b, a, x)
+    # x = rearrange(x, "(n d) t -> n t d", n=n)
+    # return x
 
 
-def epoch_preprocess(x, y, fs, notch_freq=50):
+# def epoch_preprocess(x, y, fs, notch_freq=50):
 
-    x, y = apply_notch(x, y, fs, notch_freq)
+    # x, y = apply_notch(x, y, fs, notch_freq)
 
-    ax = []
+    # ax = []
 
-    for i in range(1, 10):
-        ax.append(bandpass(x, fs, 4 * i, 4 * i + 4))
-    x = np.concatenate(ax, -1)
+    # for i in range(1, 10):
+        # ax.append(bandpass(x, fs, 4 * i, 4 * i + 4))
+    # x = np.concatenate(ax, -1)
 
-    mu = np.mean(x, axis=-1)
-    sigma = np.std(x, axis=-1)
-    x = (x - rearrange(mu, "n d -> n d 1")) / rearrange(sigma, "n d -> n d 1")
-    return x, y
+    # mu = np.mean(x, axis=-1)
+    # sigma = np.std(x, axis=-1)
+    # x = (x - rearrange(mu, "n d -> n d 1")) / rearrange(sigma, "n d -> n d 1")
+    # return x, y
 
-def clench_detect(x, y, fs, notch_freq=50):
+# def clench_detect(x, y, fs, notch_freq=50):
 
-    x, y = apply_notch(x, y, fs, notch_freq)
+    # x, y = apply_notch(x, y, fs, notch_freq)
 
-    ax = []
+    # ax = []
 
-    for i in range(1, 10):
-        ax.append(bandpass(x, fs, 4 * i, 4 * i + 4))
-    x = np.concatenate(ax, -1)
+    # for i in range(1, 10):
+        # ax.append(bandpass(x, fs, 4 * i, 4 * i + 4))
+    # x = np.concatenate(ax, -1)
 
-    mu = np.mean(x, axis=-1)
-    sigma = np.std(x, axis=-1)
-    x = (x - rearrange(mu, "n d -> n d 1"))
-    return reduce(x,"n d t -> ()","mean") > 20
+    # mu = np.mean(x, axis=-1)
+    # sigma = np.std(x, axis=-1)
+    # x = (x - rearrange(mu, "n d -> n d 1"))
+    # return reduce(x,"n d t -> ()","mean") > 20
 
 def find_bci_inlet(debug=False):
     """Find an EEG stream and return an inlet to it.
@@ -335,174 +328,175 @@ def test_recorder():
         time.sleep(1)
 
 
-class DataClassifier:
-    """Class to stream the last two seconds of LSL data"""
-
-    def __init__(
-        self,
-        player,
-        find_streams=True,
-        use_eegnet=True,
-    ):
-        self.eeg_inlet = find_bci_inlet() if find_streams else None
-        self.player = player
-        print(f"Setting player {player}")
-        self.recording = False
-        self.ready = self.eeg_inlet is not None
-
-        if self.ready:
-            logger.info("Ready to start recording.")
-
-        print("Ready to start recording")
-        context = zmq.Context()
-        self.socket = context.socket(zmq.PUB)
-
-        self.connect_zmq()
-
-        self.bufsize = 512
-        self.window_length_sec = 512
-        self.buffer = np.ndarray((8, self.bufsize))
-        self.time_buffer = np.ndarray(self.bufsize)
-        self.last_time_index = 0
-        self.current_time_index = 0
-
-        self.model = EEGNetHead(18,256)
-
-        eegnet_path = os.path.join(os.path.dirname(__file__), '../eegnet_bands_openbci.pt')
-
-        print("Loading EEGNet")
-        self.model.load_state_dict(torch.load(eegnet_path,map_location=DEVICE))
-
-        self.use_eegnet = use_eegnet
-
-    def find_streams(self):
-        """Find EEG and ZMQ socket endpoint. Updates the ready flag."""
-        self.find_eeg_inlet()
-        self.connect_zmq()
-        self.ready = self.eeg_inlet is not None
-
-    def find_eeg_inlet(self):
-        """Find the EEG stream and update the inlet."""
-        self.eeg_inlet = find_bci_inlet(debug=False)
-        logger.info(f"EEG Inlet found:{self.eeg_inlet}")
-
-    def connect_zmq(self):
-        self.socket.connect("tcp://localhost:3001")
-        print("zmq socket connected.")
-
-    def send_categorical_prediction(self, time: float, action: int, player: int):
-        topic = f"c{player}"
-        self.socket.send_string(topic, zmq.SNDMORE)
-        self.socket.send_string(f"{time}", zmq.SNDMORE)
-        self.socket.send_string(f"{action}")
-
-    def start(self, filename="test_data_0.csv"):
-        """Start recording data to a CSV file. The recording will continue until stop() is called.
-        The filename is the name of the file to save the data to. If the file already exists, it will be overwritten.
-        If the LSL streams are not available, the function will print a message and return without starting the recording.
-        Note that the output file will only be written to disk when the recording is stopped.
-        """
-
-        if not self.ready:
-            logger.error("Error: not ready to start recording")
-            logger.info(f"EEG Inlet:{self.eeg_inlet}")
-            return
-
-        self.recording = True
-
-        worker_args = [filename]
-        t = threading.Thread(target=self._start_recording_worker, args=worker_args)
-        t.start()
-
-    def _start_recording_worker(self, filename):
-        # Flush the inlets to remove old data
-        self.eeg_inlet.flush()
-
-        count = 0
-
-        model_path = os.path.join(os.path.dirname(__file__), '../model.p')
-        clench_model_path = os.path.join(os.path.dirname(__file__), '../clench_model.p')
-        
-
-        if not self.use_eegnet:
-            with open(model_path,"rb") as f:
-                clf = pickle.load(f)
-
-        with open(clench_model_path,"rb") as f:
-            clench_clf = pickle.load(f)
-
-        while self.recording:
-            eeg_sample, eeg_timestamp = self.eeg_inlet.pull_sample()
-
-            two_seconds_before = eeg_timestamp - self.window_length_sec
-
-            self.time_buffer[self.current_time_index] = eeg_timestamp
-            self.buffer[:,self.current_time_index] = eeg_sample
-            self.current_time_index = (self.current_time_index + 1) % self.bufsize
-
-            while self.time_buffer[self.last_time_index] < two_seconds_before:
-                self.last_time_index = (self.last_time_index + 1) % self.bufsize
-
-            available_samples = self.eeg_inlet.samples_available()
-            if available_samples > 16:
-                # if we are buffering samples, skip prediction to allow fetching the latest samples
-                # print(f"available samples: {available_samples} > 10, skipping prediction")
-                continue
-
-            x = self.buffer
-            c,t = x.shape
-            if t >= 512:
-                if time.time() - last_send < 0.5:
-                    continue
-
-                else:
-                    x = rearrange(x[np.array([3,5]),:],"c t -> 1 t c")
-                    x,_ = epoch_preprocess(x,None,256,60)
-                    x = rearrange(x,"b t c -> b c t")
-
-                    clench = clench_clf.predict(x)[0]
-
-                    if clench > 0:
-                        self.send_categorical_prediction(time.time(),1,self.player)
-                        last_send = time.time()
-                        continue
-                    
-                    if self.use_eegnet:
-                        y = self.model.classify(torch.tensor(x).to(torch.float32))
-                        y = F.softmax(y,-1)
-                        y = torch.argmax(y,-1)
-
-                        self.send_categorical_prediction(time.time(),y[0]+1,self.player)
-                        last_send = time.time()
-                        continue
-                    else:
-                        y = clf.predict(x)
-
-    def get_buffer_samples(self):
-        if self.last_time_index > self.current_time_index:
-            begin = self.buffer[self.last_time_index : self.bufsize]
-            end = self.buffer[0 : self.current_time_index]
-            return np.concatenate((begin, end), 0)
-        else:
-            return self.buffer[self.last_time_index : self.current_time_index]
-
-    def add_prediction(self, pred_time, pred):
-        self.prediction_buffer[self.pred_current_time_index] = [pred_time, pred]
-        self.pred_current_time_index = (self.pred_current_time_index + 1) % self.bufsize
-
-        while self.prediction_buffer[self.pred_last_time_index][0] < pred_time - 1:
-            self.pred_last_time_index = (self.pred_last_time_index + 1) % self.bufsize
-
-    def get_last_predictions(self):
-        if self.pred_last_time_index > self.pred_current_time_index:
-            begin = self.prediction_buffer[self.pred_last_time_index : self.bufsize]
-            end = self.prediction_buffer[0 : self.pred_current_time_index]
-            return np.concatenate((begin, end), 0)
-        else:
-            return self.prediction_buffer[
-                self.pred_last_time_index : self.pred_current_time_index
-            ]
-
-    def stop(self):
-        """Finish recording data to a CSV file."""
-        self.recording = False
+# class DataClassifier:
+#     """Class to stream the last two seconds of LSL data"""
+# 
+#     def __init__(
+#         self,
+#         player,
+#         find_streams=True,
+#         use_eegnet=True,
+#     ):
+#         self.eeg_inlet = find_bci_inlet() if find_streams else None
+#         self.player = player
+#         print(f"Setting player {player}")
+#         self.recording = False
+#         self.ready = self.eeg_inlet is not None
+# 
+#         if self.ready:
+#             logger.info("Ready to start recording.")
+# 
+#         print("Ready to start recording")
+#         context = zmq.Context()
+#         self.socket = context.socket(zmq.PUB)
+# 
+#         self.connect_zmq()
+# 
+#         self.bufsize = 512
+#         self.window_length_sec = 512
+#         self.buffer = np.ndarray((8, self.bufsize))
+#         self.time_buffer = np.ndarray(self.bufsize)
+#         self.last_time_index = 0
+#         self.current_time_index = 0
+# 
+#         self.model = EEGNetHead(18,256)
+# 
+#         eegnet_path = os.path.join(os.path.dirname(__file__), '../eegnet_bands_openbci.pt')
+# 
+#         print("Loading EEGNet")
+#         self.model.load_state_dict(torch.load(eegnet_path,map_location=DEVICE))
+# 
+#         self.use_eegnet = use_eegnet
+# 
+#     def find_streams(self):
+#         """Find EEG and ZMQ socket endpoint. Updates the ready flag."""
+#         self.find_eeg_inlet()
+#         self.connect_zmq()
+#         self.ready = self.eeg_inlet is not None
+# 
+#     def find_eeg_inlet(self):
+#         """Find the EEG stream and update the inlet."""
+#         self.eeg_inlet = find_bci_inlet(debug=False)
+#         logger.info(f"EEG Inlet found:{self.eeg_inlet}")
+# 
+#     def connect_zmq(self):
+#         self.socket.connect("tcp://localhost:3001")
+#         print("zmq socket connected.")
+# 
+#     def send_categorical_prediction(self, time: float, action: int, player: int):
+#         topic = f"c{player}"
+#         self.socket.send_string(topic, zmq.SNDMORE)
+#         self.socket.send_string(f"{time}", zmq.SNDMORE)
+#         self.socket.send_string(f"{action}")
+# 
+#     def start(self, filename="test_data_0.csv"):
+#         """Start recording data to a CSV file. The recording will continue until stop() is called.
+#         The filename is the name of the file to save the data to. If the file already exists, it will be overwritten.
+#         If the LSL streams are not available, the function will print a message and return without starting the recording.
+#         Note that the output file will only be written to disk when the recording is stopped.
+#         """
+# 
+#         if not self.ready:
+#             logger.error("Error: not ready to start recording")
+#             logger.info(f"EEG Inlet:{self.eeg_inlet}")
+#             return
+# 
+#         self.recording = True
+# 
+#         worker_args = [filename]
+#         t = threading.Thread(target=self._start_recording_worker, args=worker_args)
+#         t.start()
+# 
+#     def _start_recording_worker(self, filename):
+#         # Flush the inlets to remove old data
+#         self.eeg_inlet.flush()
+# 
+#         count = 0
+# 
+#         model_path = os.path.join(os.path.dirname(__file__), '../model.p')
+#         clench_model_path = os.path.join(os.path.dirname(__file__), '../clench_model.p')
+#         
+# 
+#         if not self.use_eegnet:
+#             with open(model_path,"rb") as f:
+#                 clf = pickle.load(f)
+# 
+#         with open(clench_model_path,"rb") as f:
+#             clench_clf = pickle.load(f)
+# 
+#         while self.recording:
+#             eeg_sample, eeg_timestamp = self.eeg_inlet.pull_sample()
+# 
+#             two_seconds_before = eeg_timestamp - self.window_length_sec
+# 
+#             self.time_buffer[self.current_time_index] = eeg_timestamp
+#             self.buffer[:,self.current_time_index] = eeg_sample
+#             self.current_time_index = (self.current_time_index + 1) % self.bufsize
+# 
+#             while self.time_buffer[self.last_time_index] < two_seconds_before:
+#                 self.last_time_index = (self.last_time_index + 1) % self.bufsize
+# 
+#             available_samples = self.eeg_inlet.samples_available()
+#             if available_samples > 16:
+#                 # if we are buffering samples, skip prediction to allow fetching the latest samples
+#                 # print(f"available samples: {available_samples} > 10, skipping prediction")
+#                 continue
+# 
+#             x = self.buffer
+#             c,t = x.shape
+#             if t >= 512:
+#                 if time.time() - last_send < 0.5:
+#                     continue
+# 
+#                 else:
+#                     x = rearrange(x[np.array([3,5]),:],"c t -> 1 t c")
+#                     x,_ = epoch_preprocess(x,None,256,60)
+#                     x = rearrange(x,"b t c -> b c t")
+# 
+#                     clench = clench_clf.predict(x)[0]
+# 
+#                     if clench > 0:
+#                         self.send_categorical_prediction(time.time(),1,self.player)
+#                         last_send = time.time()
+#                         continue
+#                     
+#                     if self.use_eegnet:
+#                         y = self.model.classify(torch.tensor(x).to(torch.float32))
+#                         y = F.softmax(y,-1)
+#                         y = torch.argmax(y,-1)
+# 
+#                         self.send_categorical_prediction(time.time(),y[0]+1,self.player)
+#                         last_send = time.time()
+#                         continue
+#                     else:
+#                         y = clf.predict(x)
+# 
+#     def get_buffer_samples(self):
+#         if self.last_time_index > self.current_time_index:
+#             begin = self.buffer[self.last_time_index : self.bufsize]
+#             end = self.buffer[0 : self.current_time_index]
+#             return np.concatenate((begin, end), 0)
+#         else:
+#             return self.buffer[self.last_time_index : self.current_time_index]
+# 
+#     def add_prediction(self, pred_time, pred):
+#         self.prediction_buffer[self.pred_current_time_index] = [pred_time, pred]
+#         self.pred_current_time_index = (self.pred_current_time_index + 1) % self.bufsize
+# 
+#         while self.prediction_buffer[self.pred_last_time_index][0] < pred_time - 1:
+#             self.pred_last_time_index = (self.pred_last_time_index + 1) % self.bufsize
+# 
+#     def get_last_predictions(self):
+#         if self.pred_last_time_index > self.pred_current_time_index:
+#             begin = self.prediction_buffer[self.pred_last_time_index : self.bufsize]
+#             end = self.prediction_buffer[0 : self.pred_current_time_index]
+#             return np.concatenate((begin, end), 0)
+#         else:
+#             return self.prediction_buffer[
+#                 self.pred_last_time_index : self.pred_current_time_index
+#             ]
+# 
+#     def stop(self):
+#         """Finish recording data to a CSV file."""
+#         self.recording = False
+# 

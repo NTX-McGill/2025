@@ -19,6 +19,8 @@ def decode_status(status: int) -> str:
         return "imagine-eyes-closed"
     elif status == STATUS_DONE:
         return "done"
+    else :
+        return "UNKNOWN"
 
 class MarkerOutlet:
     """This class creates and sends markers to an LSL stream."""

@@ -9,7 +9,7 @@ import logging
 # from .constants import markers
 from pathlib import Path
 # from einops import rearrange, reduce
-from scipy.signal import filtfilt, iirnotch, butter
+# from scipy.signal import filtfilt, iirnotch, butter
 import pickle
 # import zmq
 # from .pre_processing import csp_preprocess

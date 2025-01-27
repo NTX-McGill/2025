@@ -81,7 +81,7 @@ class Context:
             self._on_look_at_image(self.image_list[self.image_index])
             threading.Timer(10, self.on_next_stage).start()
         else:
-            self.on_stop()  # If no images left, stop
+            self.on_stop()  # If no images left,
 
     def on_rest_2(self):
         self.current_stage = "rest_2"
@@ -221,48 +221,54 @@ def draw(screen, ctx, current_image=None):
     pygame.display.flip()
 
 
-def runPyGame():
+def runPyGame(
+    train_sequence,
+    work_duration,
+    rest_duration,
+    image_list,
+    on_home_screen,
+    on_baseline,
+    on_imagine,
+    on_white_screen,
+    on_rest,
+    on_look_at_image,
+    on_close_eyes_imagine,
+    on_cycle_complete,
+    on_stop,
+):
     pygame.init()
     width, height = 800, 600
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Data Collection UI")
 
-    image_list = ["bci_images/Apple.png", "bci_images/McGill Arts Building.png", "bci_images/ Door Handle.png", "bci_images/Obama.png"]
-
+    # Create the Context object with passed parameters
     ctx = Context(
-        train_sequence=[
-            "imagine",
-            "white_screen_1",
-            "rest_1",
-            "look_at_image",
-            "rest_2",
-            "close_eyes_imagine",
-            "white_screen_2",
-            "rest_3",
-        ],
-        work_duration=10,
-        rest_duration=5,
+        train_sequence=train_sequence,
+        work_duration=work_duration,
+        rest_duration=rest_duration,
         image_list=image_list,
-        on_home_screen=lambda: print("Home Screen"),
-        on_baseline=lambda: print("Baseline"),
-        on_imagine=lambda: print("Imagine Object"),
-        on_white_screen_1=lambda: print("White Screen 1"),
-        on_rest_1=lambda: print("Rest 1"),
-        on_look_at_image=lambda img: print(f"Look at Image: {img}"),
-        on_rest_2=lambda: print("Rest 2"),
-        on_close_eyes_imagine=lambda: print("Close Eyes Imagine"),
-        on_white_screen_2=lambda: print("White Screen 2"),
-        on_rest_3=lambda: print("Rest 3"),
-        on_cycle_complete=lambda cycle: print(f"Cycle ({cycle}) Complete"),
-        on_stop=lambda: print("Task Complete"),
+        on_home_screen=on_home_screen,
+        on_baseline=on_baseline,
+        on_imagine=on_imagine,
+        on_white_screen_1=on_white_screen,
+        on_rest_1=on_rest,
+        on_look_at_image=on_look_at_image,
+        on_rest_2=on_rest,
+        on_close_eyes_imagine=on_close_eyes_imagine,
+        on_white_screen_2=on_white_screen,
+        on_rest_3=on_rest,
+        on_cycle_complete=on_cycle_complete,
+        on_stop=on_stop,
     )
 
+    # Start the UI
     ctx.on_home_screen()
 
     while True:
         update(ctx.on_baseline)
         current_image = ctx.image_list[ctx.image_index] if ctx.image_index < len(ctx.image_list) else None
         draw(screen, ctx, current_image)
+
 
 
 if __name__ == "__main__":

@@ -30,6 +30,7 @@ class MarkerOutlet:
             "Neurotech markers", "Markers", 1, 0, "string", "data-collection-markers"
         )
         self.outlet = pylsl.StreamOutlet(info)
+    
 
     def send(self, new_image=None, new_status=None):
         """Send a marker to the LSL stream."""
@@ -41,6 +42,10 @@ class MarkerOutlet:
         ]
         self.outlet.push_sample(sample)
         logger.debug(f"Sent update: {sample}")
+    
+    def send_marker(self, marker):
+        # Logic to send the marker
+        print(f"Marker sent: {marker}")
     
     def send_new_image(self, new_image):
         """Send a new image marker to the LSL stream."""

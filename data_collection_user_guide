@@ -1,0 +1,58 @@
+Core Components and Flow
+Markers and Constants:
+
+The constants.py file defines the set of markers (e.g., home_screen, baseline, etc.), which represent specific events in your workflow.
+These markers are used across the system to synchronize events with EEG data, ensuring timestamps are linked to specific tasks.
+Marker Outlet:
+
+The MarkerOutlet class in marker_outlet.py is responsible for creating an LSL (Lab Streaming Layer) outlet and sending markers to the EEG stream.
+Functions like send_home_screen or send_baseline allow precise event labeling during data collection.
+Data Recording:
+
+The CSVDataRecorder (from backend) handles streaming and saving EEG and marker data into a CSV file. It connects to the EEG stream and marker stream through LSL, synchronizes them, and logs data for later analysis.
+Preprocessing:
+
+The pre_processing.py file provides functions like bandpass, base_preprocess, and csp_preprocess to filter and transform raw EEG data. This step prepares the data for machine learning or classification by cleaning and standardizing it.
+BCI Streamer:
+
+The BciStreamer class connects to the OpenBCI board and streams raw EEG data to the system. This forms the backbone of the real-time data pipeline.
+Classifier:
+
+The DataClassifier (in backend) processes EEG data in real-time. It uses pre-trained models (e.g., EEGNet) to classify brain activity into predefined categories based on the tasks or markers.
+Command-Line Interface (CLI):
+
+The cli.py and live_clf.py scripts serve as user-facing entry points to interact with the system.
+Through the CLI, users can:
+Send markers.
+Start or stop recording.
+Connect to streams.
+Interact with the classifier.
+Mock Testing:
+
+The mock_markers.py script allows you to test the marker system by simulating the generation of markers in sequence. This is useful for debugging without requiring actual EEG data.
+System Flow
+Initialization:
+
+Users launch a CLI tool (cli.py or live_clf.py).
+The system initializes components like MarkerOutlet, CSVDataRecorder, or DataClassifier.
+Stream Connection:
+
+The user connects to EEG and marker streams via the LSL interface. These streams are identified and made ready for recording or processing.
+Marker Synchronization:
+
+As the user sends commands (e.g., "send marker"), the system generates markers via the MarkerOutlet, timestamping events like baseline or imagine_object.
+Data Recording:
+
+The CSVDataRecorder synchronizes EEG data with markers, saving everything to a CSV file for analysis.
+Preprocessing and Classification:
+
+Raw EEG data is filtered and processed through pre_processing.py.
+If classification is enabled, the DataClassifier uses the processed data to make real-time predictions (e.g., identifying tasks based on brain activity).
+Feedback Loop:
+
+In real-time scenarios, the system uses classifier outputs or marker feedback to guide users or refine experiments.
+
+What Makes It All Work
+LSL Integration: Ensures all streams (EEG and markers) are synchronized, enabling accurate data collection and analysis.
+Event-Driven Design: The CLI, marker system, and data pipeline all rely on user inputs or stream events to trigger actions.
+Extensibility: The modular structure (e.g., MarkerOutlet, CSVDataRecorder, etc.) makes it easy to add features like new markers, preprocessing techniques, or classifiers.

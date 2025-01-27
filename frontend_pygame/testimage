@@ -1,0 +1,1 @@
+image = pygame.image.load(bci_images/apple.png)

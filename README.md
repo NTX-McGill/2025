@@ -1,1 +1,1 @@
-2025: An apparatus for visually encoding neural representations 
+##An apparatus for visually encoding neural representations 

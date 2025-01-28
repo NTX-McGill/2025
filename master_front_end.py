@@ -58,7 +58,10 @@ class Context:
             self.current_stage = "baseline"
             self._on_baseline()
             self.baseline_done = True
-            threading.Timer(10, self.on_next_stage).start()  # Proceed to the first stage after baseline
+            # Immediately proceed to the next stage
+            self.train_index += 1
+            threading.Timer(10, self.on_next_stage).start()  # Proceed to the next stage
+
 
     def on_imagine(self):
         self.current_stage = "imagine"
@@ -104,16 +107,16 @@ class Context:
         threading.Timer(5, self.on_next_cycle).start()  # Conclude the cycle and start the next one
 
     def on_next_stage(self):
-        # Get the next stage from the train_sequence
+        # Check if we have more stages left
         if self.train_index >= len(self.train_sequence):
             return  # No more stages in the current cycle
 
         next_stage = self.train_sequence[self.train_index]
-        self.train_index += 1
+        self.train_index += 1  # Increment train index for the next stage
 
         print(f"Transitioning to: {next_stage}, train_index: {self.train_index}")
 
-        # Move to the next stage
+        # Call the appropriate stage function
         if next_stage == "imagine":
             self.on_imagine()
         elif next_stage == "white_screen_1":
@@ -131,19 +134,20 @@ class Context:
         elif next_stage == "rest_3":
             self.on_rest_3()
 
+
     def on_next_cycle(self):
-        self.train_index = 0  # Reset the train sequence index
-        self.image_index += 1  # Move to the next image
-        self.cycle_count += 1  # Increment cycle count
+        self.train_index = 0
+        self.image_index += 1
+        self.cycle_count += 1
 
         if self.image_index < len(self.image_list):
             self.current_stage = "cycle_complete"
             print(f"Cycle ({self.cycle_count}) Complete")
             self._on_cycle_complete(self.cycle_count)
-            threading.Timer(5, self.on_imagine).start()  # Start next cycle
+            threading.Timer(5, self.on_imagine).start()
         else:
             print("No more images")
-            self._on_stop()  # End if no more images
+            self._on_stop()
 
 
 def update(on_start_cb):
@@ -165,7 +169,7 @@ def show_text(screen, text, font_size=40, color=(0, 0, 100)):
 
 
 def draw(screen, ctx, current_image=None):
-    screen.fill((255, 255, 255))  # Default white background
+    screen.fill((255, 255, 255))
 
     if ctx.current_stage == "home_screen":
         show_text(screen, "Press SPACE to Start", font_size=40, color=("#d7d3d2"))
@@ -175,7 +179,6 @@ def draw(screen, ctx, current_image=None):
         show_text(screen, "Baseline", font_size=40)
 
     elif ctx.current_stage == "imagine":
-        # Display the name of the image for "Imagine"
         if current_image:
             image_name = os.path.splitext(os.path.basename(current_image))[0]
             show_text(screen, f"Imagine: {image_name}", font_size=40)
@@ -184,7 +187,7 @@ def draw(screen, ctx, current_image=None):
         screen.fill((255, 255, 255))
 
     elif ctx.current_stage == "rest_1":
-        screen.fill((173, 216, 230))  # Light blue
+        screen.fill((173, 216, 230))
 
     elif ctx.current_stage == "look_at_image":
         if current_image:
@@ -199,7 +202,6 @@ def draw(screen, ctx, current_image=None):
         screen.fill((173, 216, 230))
 
     elif ctx.current_stage == "close_eyes_imagine":
-        # Display the name of the image for "Close Eyes and Imagine"
         if current_image:
             image_name = os.path.splitext(os.path.basename(current_image))[0]
             show_text(screen, f"Close Eyes and Imagine: {image_name}", font_size=40)
@@ -211,11 +213,11 @@ def draw(screen, ctx, current_image=None):
         screen.fill((173, 216, 230))
 
     elif ctx.current_stage == "cycle_complete":
-        screen.fill((0, 0, 128))  # Navy blue background
+        screen.fill((0, 0, 128))
         show_text(screen, f"Cycle ({ctx.cycle_count}) Complete", font_size=50, color=(255, 255, 255))
 
     elif ctx.current_stage == "complete":
-        screen.fill((0, 0, 128))  # Navy blue background
+        screen.fill((0, 0, 128))
         show_text(screen, "No more images. Task Complete.", font_size=40, color=(255, 255, 255))
 
     pygame.display.flip()
@@ -241,7 +243,6 @@ def runPyGame(
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Data Collection UI")
 
-    # Create the Context object with passed parameters
     ctx = Context(
         train_sequence=train_sequence,
         work_duration=work_duration,
@@ -261,7 +262,6 @@ def runPyGame(
         on_stop=on_stop,
     )
 
-    # Start the UI
     ctx.on_home_screen()
 
     while True:
@@ -270,7 +270,66 @@ def runPyGame(
         draw(screen, ctx, current_image)
 
 
-
 if __name__ == "__main__":
-    runPyGame()
+    train_sequence = [
+        "baseline",
+        "imagine",
+        "white_screen_1",
+        "rest_1",
+        "look_at_image",
+        "rest_2",
+        "close_eyes_imagine",
+        "white_screen_2",
+        "rest_3",
+    ]
+    image_list = [
+        "bci_images/Apple.png",
+        "bci_images/McGill Arts Building.png",
+        "bci_images/Door Handle.png",
+        "bci_images/Obama.png",
+    ]
 
+    def on_home_screen():
+        print("Home Screen")
+
+    def on_baseline():
+        print("Baseline")
+
+    def on_imagine():
+        print("Imagine Object")
+
+    def on_white_screen():
+        print("White Screen")
+
+    def on_rest():
+        print("Rest")
+
+    def on_look_at_image(image):
+        print(f"Look at Image: {image}")
+
+    def on_close_eyes_imagine():
+        print("Close Eyes and Imagine")
+
+    def on_cycle_complete(cycle):
+        print(f"Cycle {cycle} Complete")
+
+    def on_stop():
+        print("Task Complete")
+        pygame.quit()
+        sys.exit()
+
+    runPyGame(
+        train_sequence=train_sequence,
+        work_duration=10,
+        rest_duration=5,
+        image_list=image_list,
+        on_home_screen=on_home_screen,
+        on_baseline=on_baseline,
+        on_imagine=on_imagine,
+        on_white_screen=on_white_screen,
+        on_rest=on_rest,
+        on_look_at_image=on_look_at_image,
+        on_close_eyes_imagine=on_close_eyes_imagine,
+        on_cycle_complete=on_cycle_complete,
+        on_stop=on_stop,
+    )

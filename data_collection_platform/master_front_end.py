@@ -53,6 +53,10 @@ class Context:
         self.current_stage = "home_screen"
         self._on_home_screen()
 
+    def on_instruction_screen(self):
+        self.current_stage = "instruction_screen"
+
+
     def on_baseline(self):
         if not self.baseline_done:  # Ensure baseline happens only once
             self.current_stage = "baseline"
@@ -60,7 +64,7 @@ class Context:
             self.baseline_done = True
             # Immediately proceed to the next stage
             self.train_index += 1
-            threading.Timer(10, self.on_next_stage).start()  # Proceed to the next stage
+            #threading.Timer(10, self.on_next_stage).start()  # Proceed to the next stage
 
 
     def on_imagine(self):
@@ -150,33 +154,59 @@ class Context:
             self._on_stop()
 
 
-def update(on_start_cb):
+def show_text(screen, text, font_size=40, color=(0, 0, 100), y_offset=0):
+    font = pygame.font.SysFont("Times New Roman", font_size, True, False)
+    surface = font.render(text, True, color)
+    text_rect = surface.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2 + y_offset))
+    screen.blit(surface, text_rect)
+
+def update(ctx):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE and on_start_cb:
-                on_start_cb()
-                return
-
-
-def show_text(screen, text, font_size=40, color=(0, 0, 100)):
-    font = pygame.font.SysFont("Times New Roman", font_size, True, False)
-    surface = font.render(text, True, color)
-    text_rect = surface.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
-    screen.blit(surface, text_rect)
+            if event.key == pygame.K_SPACE:
+                if ctx.current_stage == "home_screen":
+                    ctx.on_instruction_screen()  # Move from Home Screen to Instructions
+                elif ctx.current_stage == "instruction_screen":
+                    ctx.on_baseline()  # Start the data collection
+                elif ctx.current_stage == "baseline":
+                    ctx.on_next_stage()  # Proceed to the next stage after baseline
+            elif event.key == pygame.K_ESCAPE:  # Exit fullscreen
+                pygame.quit()
+                sys.exit()
 
 
 def draw(screen, ctx, current_image=None):
-    screen.fill((255, 255, 255))
+    screen.fill((255, 255, 255))  # Default white background
 
-    if ctx.current_stage == "home_screen":
-        show_text(screen, "Press SPACE to Start", font_size=40, color=("#d7d3d2"))
-        show_text(screen, "NTech Data Collection Interface 2025", font_size=30, color=(0, 0, 0))
+    if ctx.current_stage == "instruction_screen":
+        instruction_text = [
+            "You will be taken through a series of prompts,",
+            "with an initial baseline for calibration.",
+            "Between each stage, there will be a 5-second rest with a countdown.",
+            "Each prompt stage will be 15 seconds.",
+            "There will be 3 prompts, and 4 cycles total.",
+            "Hit ESC to exit the session.",
+            "Your data will automatically be saved to a .csv file."
+        ]
+
+        screen.fill((255, 255, 255))  # Ensure white background
+
+        for i, line in enumerate(instruction_text):
+            y_offset = -120 + (i * 40)  # Adjust vertical spacing
+            show_text(screen, line, font_size=30, color=(0, 0, 255), y_offset=y_offset)
+
+        # Add prompt to continue
+        show_text(screen, "Press SPACE to Begin", font_size=35, color=(0, 0, 100), y_offset=200)
+
+    elif ctx.current_stage == "home_screen":
+        show_text(screen, "NTech Data Collection Interface 2025", font_size=30, color=(0, 0, 0), y_offset=-30)
+        show_text(screen, "Press SPACE to Start", font_size=40, color=(0, 0, 100), y_offset=30)
 
     elif ctx.current_stage == "baseline":
-        show_text(screen, "Baseline", font_size=40)
+        screen.fill((255, 255, 255))
 
     elif ctx.current_stage == "imagine":
         if current_image:
@@ -223,6 +253,8 @@ def draw(screen, ctx, current_image=None):
     pygame.display.flip()
 
 
+# Fix for main loop in runPyGame to pass ctx instead of ctx.on_baseline
+
 def runPyGame(
     train_sequence,
     work_duration,
@@ -240,7 +272,7 @@ def runPyGame(
 ):
     pygame.init()
     width, height = 800, 600
-    screen = pygame.display.set_mode((width, height))
+    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     pygame.display.set_caption("Data Collection UI")
 
     ctx = Context(
@@ -265,7 +297,7 @@ def runPyGame(
     ctx.on_home_screen()
 
     while True:
-        update(ctx.on_baseline)
+        update(ctx) 
         current_image = ctx.image_list[ctx.image_index] if ctx.image_index < len(ctx.image_list) else None
         draw(screen, ctx, current_image)
 

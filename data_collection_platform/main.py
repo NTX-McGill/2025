@@ -35,35 +35,35 @@ def on_stop():
 
 
 def on_home_screen():
-    marker_outlet.send_marker("Home Screen")
+    marker_outlet.send_transition("Home Screen")
 
 
 def on_baseline():
-    marker_outlet.send_marker("Baseline")
+    marker_outlet.send_transition("Baseline")
 
 
 def on_imagine():
-    marker_outlet.send_marker("Imagine Object")
+    marker_outlet.send_transition("Imagine Object")
 
 
 def on_blank_white():
-    marker_outlet.send_marker("Blank White")
+    marker_outlet.send_transition("Blank White")
 
 
 def on_rest():
-    marker_outlet.send_marker("Rest")
+    marker_outlet.send_transition("Rest")
 
 
 def on_look_at_image(image):
-    marker_outlet.send_marker(f"Look at Image: {image}")
+    marker_outlet.send_new_image(f"Look at Image: {image}")
 
 
 def on_close_eyes_imagine():
-    marker_outlet.send_marker("Close Eyes and Imagine")
+    marker_outlet.send_transition("Close Eyes and Imagine")
 
 
 def on_cycle_complete(cycle):
-    marker_outlet.send_marker(f"Cycle {cycle} Complete")
+    marker_outlet.send_transition(f"Cycle {cycle} Complete")
 
 
 def create_train_sequence():

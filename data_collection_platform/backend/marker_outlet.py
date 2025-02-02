@@ -4,6 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def decode_status(status: int) -> str:
     """Decode a marker from the LSL stream."""
 
@@ -19,18 +20,18 @@ def decode_status(status: int) -> str:
         return "imagine-eyes-closed"
     elif status == STATUS_DONE:
         return "done"
-    else :
+    else:
         return "UNKNOWN"
+
 
 class MarkerOutlet:
     """This class creates and sends markers to an LSL stream."""
 
     def __init__(self):
         info = pylsl.StreamInfo(
-            "Neurotech markers", "Markers", 1, 0, "string", "data-collection-markers"
+            "Neurotech markers", "Markers", 4, 0, "string", "data-collection-markers"
         )
         self.outlet = pylsl.StreamOutlet(info)
-    
 
     def send(self, new_image=None, new_status=None):
         """Send a marker to the LSL stream."""
@@ -42,17 +43,11 @@ class MarkerOutlet:
         ]
         self.outlet.push_sample(sample)
         logger.debug(f"Sent update: {sample}")
-    
-    def send_marker(self, marker):
-        # Logic to send the marker
-        print(f"Marker sent: {marker}")
-    
+
     def send_new_image(self, new_image):
         """Send a new image marker to the LSL stream."""
         self.send(new_image=new_image)
-    
+
     def send_transition(self, new_status):
         """Send a transition marker to the LSL stream."""
         self.send(new_status=new_status)
-
-

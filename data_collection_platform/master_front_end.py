@@ -1,9 +1,13 @@
 import sys
 import pygame
 from pygame.locals import *
+import time
 import threading
 import os  # To extract the image name from the file path
 
+screen_width = 1200  # Set your desired width
+screen_height = 800  # Set your desired height
+screen = pygame.display.set_mode((screen_width, screen_height))  # Windowed mode
 
 class Context:
     def __init__(
@@ -199,6 +203,37 @@ def update(ctx):
                 pygame.quit()
                 sys.exit()
 
+def progress_bar(screen):
+    progress = 0
+    bar_width = screen.get_width()
+    bar_height = 100
+    bar_x = (screen.get_width() - bar_width) // 2  # Center horizontally
+    bar_y = (800)  #bottom of screen
+    start_time = time.time()
+    duration = 5  # 5 seconds
+
+    # Game loop
+    running = True
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        # Calculate progress based on elapsed time
+        elapsed_time = time.time() - start_time
+        progress = min(elapsed_time / duration, 1.0)  # Clamp to 1.0 maximum
+
+        # Draw progress bar
+        pygame.draw.rect(screen, (255, 255, 255), pygame.Rect(bar_x, bar_y, bar_width, bar_height), 1)
+        pygame.draw.rect(screen, ("#b5dcf5"), pygame.Rect(bar_x, bar_y, bar_width * progress, bar_height))
+
+        pygame.display.flip()
+
+        # Exit after 5 seconds
+        if elapsed_time >= duration:
+            time.sleep(0.5)  # Pause briefly at the end
+            running = False
+
 
 def draw(screen, ctx, current_image=None):
     screen.fill((255, 255, 255))  # Default white background
@@ -225,7 +260,7 @@ def draw(screen, ctx, current_image=None):
 
     elif ctx.current_stage == "home_screen":
         show_text(screen, "NTech Data Collection Interface 2025", font_size=30, color=(0, 0, 0), y_offset=-30)
-        show_text(screen, "Press SPACE to Start", font_size=40, color=(0, 0, 100), y_offset=30)
+        show_text(screen, "Press SPACE to Start", font_size=40, color=(0, 0, 255), y_offset=30)
 
     elif ctx.current_stage == "baseline":
         screen.fill((255, 255, 255))
@@ -234,12 +269,14 @@ def draw(screen, ctx, current_image=None):
         if current_image:
             image_name = os.path.splitext(os.path.basename(current_image))[0]
             show_text(screen, f"Imagine: {image_name}", font_size=40)
+            progress_bar(screen)
 
     elif ctx.current_stage == "white_screen_1":
         screen.fill((255, 255, 255))
 
     elif ctx.current_stage == "rest_1":
-        screen.fill((173, 216, 230))
+        screen.fill((255, 255, 255))
+        progress_bar(screen)
 
     elif ctx.current_stage == "look_at_image":
         if current_image:
@@ -251,18 +288,21 @@ def draw(screen, ctx, current_image=None):
                 show_text(screen, "Image not found", font_size=40)
 
     elif ctx.current_stage == "rest_2":
-        screen.fill((173, 216, 230))
+        screen.fill((255, 255, 255))
+        progress_bar(screen)
 
     elif ctx.current_stage == "close_eyes_imagine":
         if current_image:
             image_name = os.path.splitext(os.path.basename(current_image))[0]
             show_text(screen, f"Close Eyes and Imagine: {image_name}", font_size=40)
+            progress_bar(screen)
 
     elif ctx.current_stage == "white_screen_2":
         screen.fill((255, 255, 255))
 
     elif ctx.current_stage == "rest_3":
-        screen.fill((173, 216, 230))
+        screen.fill((255, 255, 255))
+        progress_bar(screen)
 
     elif ctx.current_stage == "cycle_complete":
         screen.fill((0, 0, 128))
@@ -293,8 +333,9 @@ def runPyGame(
     on_stop,
 ):
     pygame.init()
-    width, height = 800, 600
-    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    width, height = 1000, 800
+    info = pygame.display.Info()
+    screen = pygame.display.set_mode((info.current_w, info.current_h), pygame.RESIZABLE)
     pygame.display.set_caption("Data Collection UI")
 
     ctx = Context(
@@ -319,7 +360,7 @@ def runPyGame(
     ctx.on_home_screen()
 
     while True:
-        update(ctx) 
+        update(ctx)
         current_image = ctx.image_list[ctx.image_index] if ctx.image_index < len(ctx.image_list) else None
         draw(screen, ctx, current_image)
 

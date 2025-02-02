@@ -247,7 +247,6 @@ def draw(screen, ctx, current_image=None):
 
     elif ctx.current_stage == "white_screen_1":
         screen.fill((255, 255, 255))
-        progress_bar(screen)
 
     elif ctx.current_stage == "rest_1":
         screen.fill((173, 216, 230))
@@ -276,6 +275,7 @@ def draw(screen, ctx, current_image=None):
 
     elif ctx.current_stage == "rest_3":
         screen.fill((173, 216, 230))
+        progress_bar(screen)
 
     elif ctx.current_stage == "cycle_complete":
         screen.fill((0, 0, 128))

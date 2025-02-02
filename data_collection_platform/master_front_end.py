@@ -1,6 +1,7 @@
 import sys
 import pygame
 from pygame.locals import *
+import time
 import threading
 import os  # To extract the image name from the file path
 
@@ -64,7 +65,7 @@ class Context:
             self.baseline_done = True
             # Immediately proceed to the next stage
             self.train_index += 1
-            #threading.Timer(10, self.on_next_stage).start()  # Proceed to the next stage
+            threading.Timer(10, self.on_next_stage).start()  # Proceed to the next stage
 
 
     def on_imagine(self):
@@ -177,6 +178,37 @@ def update(ctx):
                 pygame.quit()
                 sys.exit()
 
+def progress_bar(screen):
+    progress = 0
+    bar_width = 400
+    bar_height = 40
+    bar_x = (screen.get_width() - bar_width) // 2  # Center horizontally
+    bar_y = (screen.get_height() - bar_height) // 2  # Center vertically
+    start_time = time.time()
+    duration = 5  # 5 seconds
+
+    # Game loop
+    running = True
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        # Calculate progress based on elapsed time
+        elapsed_time = time.time() - start_time
+        progress = min(elapsed_time / duration, 1.0)  # Clamp to 1.0 maximum
+
+        # Draw progress bar
+        pygame.draw.rect(screen, (0, 0, 0), pygame.Rect(bar_x, bar_y, bar_width, bar_height), 1)
+        pygame.draw.rect(screen, (255, 255, 255), pygame.Rect(bar_x, bar_y, bar_width * progress, bar_height))
+
+        pygame.display.flip()
+
+        # Exit after 5 seconds
+        if elapsed_time >= duration:
+            time.sleep(0.5)  # Pause briefly at the end
+            running = False
+
 
 def draw(screen, ctx, current_image=None):
     screen.fill((255, 255, 255))  # Default white background
@@ -215,9 +247,11 @@ def draw(screen, ctx, current_image=None):
 
     elif ctx.current_stage == "white_screen_1":
         screen.fill((255, 255, 255))
+        progress_bar(screen)
 
     elif ctx.current_stage == "rest_1":
         screen.fill((173, 216, 230))
+        progress_bar(screen)
 
     elif ctx.current_stage == "look_at_image":
         if current_image:
@@ -230,6 +264,7 @@ def draw(screen, ctx, current_image=None):
 
     elif ctx.current_stage == "rest_2":
         screen.fill((173, 216, 230))
+        progress_bar(screen)
 
     elif ctx.current_stage == "close_eyes_imagine":
         if current_image:
@@ -297,7 +332,7 @@ def runPyGame(
     ctx.on_home_screen()
 
     while True:
-        update(ctx) 
+        update(ctx)
         current_image = ctx.image_list[ctx.image_index] if ctx.image_index < len(ctx.image_list) else None
         draw(screen, ctx, current_image)
 

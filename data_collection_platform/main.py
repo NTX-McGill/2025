@@ -1,13 +1,20 @@
+
 import datetime
+import pygame
+import time
+import sys
+import numpy as np
+import logging
+import pathlib
 from backend.csv_data_recorder import CSVDataRecorder
 from backend.marker_outlet import MarkerOutlet
 from master_front_end import runPyGame
-import logging
-import pathlib
 
+# Initialize data recorder and marker outlet
 collector = CSVDataRecorder(find_streams=False)
 marker_outlet = MarkerOutlet()
 
+# Logging configuration
 log_path = pathlib.Path(f"logs/data_collection_platform.log")
 log_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -18,7 +25,7 @@ logging.basicConfig(
     format="%(asctime)s %(name)s %(levelname)s %(message)s",
 )
 
-
+# Callback functions for different stages
 def on_start():
     collector.find_streams()
 
@@ -28,42 +35,32 @@ def on_start():
     else:
         print("Data not ready - quit and try again.")
 
-
 def on_stop():
     collector.stop()
-
 
 def on_home_screen():
     marker_outlet.send_transition("Home Screen")
 
-
 def on_baseline():
     marker_outlet.send_transition("Baseline")
-
 
 def on_imagine():
     marker_outlet.send_transition("Imagine Object")
 
-
 def on_blank_white():
     marker_outlet.send_transition("Blank White")
-
 
 def on_rest():
     marker_outlet.send_transition("Rest")
 
-
 def on_look_at_image(image):
     marker_outlet.send_new_image(f"Look at Image: {image}")
-
 
 def on_close_eyes_imagine():
     marker_outlet.send_transition("Close Eyes and Imagine")
 
-
 def on_cycle_complete(cycle):
     marker_outlet.send_transition(f"Cycle {cycle} Complete")
-
 
 def create_train_sequence():
     return [
@@ -78,8 +75,20 @@ def create_train_sequence():
         "rest_3",
     ]
 
-
+# Main data collection function
 def main():
+    # Prompt user to enter CSV filename
+    filename = input("Enter the name of the CSV file (without extension): ") + ".csv"
+
+    # Start recording EEG data
+    collector.find_streams()
+    if collector.ready:
+        print(f"Starting data recording... Saving to: {filename}")
+        collector.start(filename=filename)
+    else:
+        print("LSL streams not ready. Please ensure EEG and Marker streams are running.")
+        return
+
     sequence = create_train_sequence()
     print("Sequence: ", sequence)
 
@@ -90,7 +99,6 @@ def main():
         "bci_images/Obama.png",
     ]
 
-    # Pass parameters directly to runPyGame
     runPyGame(
         train_sequence=sequence,
         work_duration=10,
@@ -107,6 +115,7 @@ def main():
         on_stop=on_stop,
     )
 
-
+# Entry point
 if __name__ == "__main__":
     main()
+

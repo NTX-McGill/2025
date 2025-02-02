@@ -60,55 +60,74 @@ class Context:
     def on_baseline(self):
         if not self.baseline_done:  # Ensure baseline happens only once
             self.current_stage = "baseline"
-            self._on_baseline()
+            #self._on_baseline()
             self.baseline_done = True
             # Immediately proceed to the next stage
             self.train_index += 1
-            #threading.Timer(10, self.on_next_stage).start()  # Proceed to the next stage
+            thread = threading.Timer(10, self.on_next_stage,)  # Proceed to the next stage
+            thread.daemon = True
+            thread.start()
+            
 
 
     def on_imagine(self):
         self.current_stage = "imagine"
         self._on_imagine()
-        threading.Timer(3, self.on_next_stage).start()
+        thread = threading.Timer(3, self.on_next_stage)
+        thread.daemon = True
+        thread.start()
 
     def on_white_screen_1(self):
         self.current_stage = "white_screen_1"
         self._on_white_screen_1()
-        threading.Timer(10, self.on_next_stage).start()
+        thread = threading.Timer(10, self.on_next_stage)
+        thread.daemon = True
+        thread.start()
 
     def on_rest_1(self):
         self.current_stage = "rest_1"
         self._on_rest_1()
-        threading.Timer(5, self.on_next_stage).start()
+        thread = threading.Timer(5, self.on_next_stage)
+        thread.daemon = True
+        thread.start()
 
     def on_look_at_image(self):
         self.current_stage = "look_at_image"
         if self.image_index < len(self.image_list):
             self._on_look_at_image(self.image_list[self.image_index])
-            threading.Timer(10, self.on_next_stage).start()
+            thread = threading.Timer(10, self.on_next_stage)
+            thread.daemon = True
+            thread.start()
         else:
             self.on_stop()  # If no images left,
 
     def on_rest_2(self):
         self.current_stage = "rest_2"
         self._on_rest_2()
-        threading.Timer(5, self.on_next_stage).start()
+        thread = threading.Timer(5, self.on_next_stage)
+        thread.daemon = True
+        thread.start()
 
     def on_close_eyes_imagine(self):
         self.current_stage = "close_eyes_imagine"
         self._on_close_eyes_imagine()
-        threading.Timer(3, self.on_next_stage).start()
+        thread = threading.Timer(3, self.on_next_stage)
+        thread.daemon = True
+        thread.start()
 
     def on_white_screen_2(self):
         self.current_stage = "white_screen_2"
         self._on_white_screen_2()
-        threading.Timer(10, self.on_next_stage).start()
+        thread = threading.Timer(10, self.on_next_stage)
+        thread.daemon = True
+        thread.start()
 
     def on_rest_3(self):
         self.current_stage = "rest_3"
         self._on_rest_3()
-        threading.Timer(5, self.on_next_cycle).start()  # Conclude the cycle and start the next one
+        thread = threading.Timer(5, self.on_next_cycle)  # Conclude the cycle and start the next one
+        thread.daemon = True
+        thread.start()
 
     def on_next_stage(self):
         # Check if we have more stages left
@@ -148,7 +167,9 @@ class Context:
             self.current_stage = "cycle_complete"
             print(f"Cycle ({self.cycle_count}) Complete")
             self._on_cycle_complete(self.cycle_count)
-            threading.Timer(5, self.on_imagine).start()
+            thread = threading.Timer(5, self.on_imagine)
+            thread.daemon = True
+            thread.start()
         else:
             print("No more images")
             self._on_stop()
@@ -174,6 +195,7 @@ def update(ctx):
                 elif ctx.current_stage == "baseline":
                     ctx.on_next_stage()  # Proceed to the next stage after baseline
             elif event.key == pygame.K_ESCAPE:  # Exit fullscreen
+                #print("Threads: ",threading.active_count())
                 pygame.quit()
                 sys.exit()
 
@@ -352,8 +374,8 @@ if __name__ == "__main__":
 
     runPyGame(
         train_sequence=train_sequence,
-        work_duration=10,
-        rest_duration=5,
+        work_duration=5,
+        rest_duration=3,
         image_list=image_list,
         on_home_screen=on_home_screen,
         on_baseline=on_baseline,

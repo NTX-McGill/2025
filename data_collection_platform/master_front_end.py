@@ -164,7 +164,7 @@ class Context:
 
 
     def on_next_cycle(self):
-        self.train_index = 0
+        self.train_index = 1
         self.image_index += 1
         self.cycle_count += 1
 
@@ -177,8 +177,9 @@ class Context:
             thread.start()
         else:
             print("No more images")
+            self.current_stage = "complete"
             self._on_stop()
-
+                      
 
 def show_text(screen, text, font_size=40, color=(0, 0, 100), y_offset=0):
     font = pygame.font.SysFont("Times New Roman", font_size, True, False)

@@ -55,7 +55,8 @@ class Context:
 
     def on_home_screen(self):
         self.current_stage = "home_screen"
-        self._on_home_screen()
+        # self._on_home_screen()
+        # no work to be done for LSL since the state starts in STATUS_TRANSITION
 
     def on_instruction_screen(self):
         self.current_stage = "instruction_screen"
@@ -76,7 +77,7 @@ class Context:
 
     def on_imagine(self):
         self.current_stage = "imagine"
-        self._on_imagine()
+        self._on_imagine(self.image_index)
         thread = threading.Timer(3, self.on_next_stage)
         thread.daemon = True
         thread.start()
@@ -323,7 +324,7 @@ def runPyGame(
     image_list,
     on_home_screen,
     on_baseline,
-    on_imagine,
+    on_imagine, # (image_id) -> None
     on_white_screen,
     on_rest,
     on_look_at_image,

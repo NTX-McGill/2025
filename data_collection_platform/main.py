@@ -1,13 +1,10 @@
 import datetime
-import pygame
-import time
-import sys
-import numpy as np
-#import logging
+import logging
 import pathlib
 from backend.csv_data_recorder import CSVDataRecorder
 from backend.marker_outlet import MarkerOutlet
 from master_front_end import runPyGame
+from constants import *
 
 # Initialize data recorder and marker outlet
 collector = CSVDataRecorder(find_streams=False)
@@ -38,28 +35,29 @@ def on_stop():
     collector.stop()
 
 def on_home_screen():
-    marker_outlet.send_transition("Home Screen")
+    marker_outlet.send_transition(STATUS_TRANSITION)
 
 def on_baseline():
-    marker_outlet.send_transition("Baseline")
+    marker_outlet.send_transition(STATUS_BASELINE)
 
-def on_imagine():
-    marker_outlet.send_transition("Imagine Object")
+def on_imagine(image_id: int):
+    marker_outlet.send(new_image=image_id, new_status=STATUS_IMAGINE)
 
-def on_blank_white():
-    marker_outlet.send_transition("Blank White")
+def on_white_screen():
+    marker_outlet.send_transition(STATUS_TRANSITION)
 
 def on_rest():
-    marker_outlet.send_transition("Rest")
+    marker_outlet.send_transition(STATUS_TRANSITION)
 
 def on_look_at_image(image):
-    marker_outlet.send_new_image(f"Look at Image: {image}")
+    marker_outlet.send_new_image(STATUS_LOOK)
 
 def on_close_eyes_imagine():
-    marker_outlet.send_transition("Close Eyes and Imagine")
+    marker_outlet.send_transition(STATUS_IMAGINE_EYES_CLOSED)
 
 def on_cycle_complete(cycle):
-    marker_outlet.send_transition(f"Cycle {cycle} Complete")
+    marker_outlet.send(new_status=STATUS_TRANSITION, new_image=IMAGE_NONE)
+    pass
 
 def create_train_sequence():
     return [
@@ -106,7 +104,7 @@ def main():
         on_home_screen=on_home_screen,
         on_baseline=on_baseline,
         on_imagine=on_imagine,
-        on_white_screen=on_blank_white,
+        on_white_screen=on_white_screen,
         on_rest=on_rest,
         on_look_at_image=on_look_at_image,
         on_close_eyes_imagine=on_close_eyes_imagine,

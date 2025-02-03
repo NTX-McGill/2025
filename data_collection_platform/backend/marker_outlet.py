@@ -29,7 +29,7 @@ class MarkerOutlet:
 
     def __init__(self):
         info = pylsl.StreamInfo(
-            "Neurotech markers", "Markers", 4, 0, "string", "data-collection-markers"
+            "Neurotech markers", "Markers", 4, 0, "int32", "data-collection-markers"
         )
         self.outlet = pylsl.StreamOutlet(info)
 

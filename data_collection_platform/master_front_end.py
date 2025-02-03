@@ -163,7 +163,7 @@ class Context:
 
 
     def on_next_cycle(self):
-        self.train_index = 0
+        self.train_index = 1
         self.image_index += 1
         self.cycle_count += 1
 
@@ -176,8 +176,9 @@ class Context:
             thread.start()
         else:
             print("No more images")
+            self.current_stage = "complete"
             self._on_stop()
-
+                      
 
 def show_text(screen, text, font_size=40, color=(0, 0, 100), y_offset=0):
     font = pygame.font.SysFont("Times New Roman", font_size, True, False)
@@ -208,7 +209,7 @@ def progress_bar(screen):
     bar_width = screen.get_width()
     bar_height = 100
     bar_x = (screen.get_width() - bar_width) // 2  # Center horizontally
-    bar_y = (800)  #bottom of screen
+    bar_y = (700)  #bottom of screen
     start_time = time.time()
     duration = 5  # 5 seconds
 
@@ -415,8 +416,8 @@ if __name__ == "__main__":
 
     runPyGame(
         train_sequence=train_sequence,
-        work_duration=5,
-        rest_duration=3,
+        work_duration=10,
+        rest_duration=5,
         image_list=image_list,
         on_home_screen=on_home_screen,
         on_baseline=on_baseline,

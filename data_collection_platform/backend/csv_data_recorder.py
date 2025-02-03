@@ -216,16 +216,16 @@ class CSVDataRecorder:
         for i in range(8):
             df[f"ch{i+1}"] = channel_lists[i]
 
-        df["transition"] = status_list == STATUS_TRANSITION
-        df["baseline"] = status_list == STATUS_BASELINE
-        df["imagine"] = status_list == STATUS_IMAGINE
-        df["look"] = status_list == STATUS_LOOK
-        df["imagine_eyes_closed"] = status_list == STATUS_IMAGINE_EYES_CLOSED
-        df["done"] = status_list == STATUS_DONE
+        df["transition"] = (status_list == STATUS_TRANSITION).astype(int)
+        df["baseline"] = (status_list == STATUS_BASELINE).astype(int)
+        df["imagine"] = (status_list == STATUS_IMAGINE).astype(int)
+        df["look"] = (status_list == STATUS_LOOK).astype(int)
+        df["imagine_eyes_closed"] = (status_list == STATUS_IMAGINE_EYES_CLOSED).astype(int)
+        df["done"] = (status_list == STATUS_DONE).astype(int)
 
         for i in range(self.num_imgs):
-            df[f"image_{i}"] = image_id_list == i
-        df["image_none"] = image_id_list == IMAGE_NONE
+            df[f"image_{i}"] = (image_id_list == i).astype(int)
+        df["image_none"] = (image_id_list == IMAGE_NONE).astype(int)
 
         filepath = Path(f"collected_data/{filename}")
         filepath.parent.mkdir(parents=True, exist_ok=True)

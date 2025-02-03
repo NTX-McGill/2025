@@ -1,10 +1,9 @@
-
 import datetime
 import pygame
 import time
 import sys
 import numpy as np
-import logging
+#import logging
 import pathlib
 from backend.csv_data_recorder import CSVDataRecorder
 from backend.marker_outlet import MarkerOutlet

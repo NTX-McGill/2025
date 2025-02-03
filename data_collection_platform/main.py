@@ -97,8 +97,8 @@ def main():
 
     runPyGame(
         train_sequence=sequence,
-        work_duration=10,
-        rest_duration=5,
+        work_duration=15,
+        rest_duration=10,
         image_list=image_list,
         on_home_screen=on_home_screen,
         on_baseline=on_baseline,

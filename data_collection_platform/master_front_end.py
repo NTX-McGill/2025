@@ -70,7 +70,7 @@ class Context:
             self.baseline_done = True
             # Immediately proceed to the next stage
             self.train_index += 1
-            thread = threading.Timer(10, self.on_next_stage,) # Proceed to the next stage
+            thread = threading.Timer(15, self.on_next_stage,) # Proceed to the next stage
             thread.daemon = True
             thread.start()
 
@@ -78,21 +78,21 @@ class Context:
     def on_imagine(self):
         self.current_stage = "imagine"
         self._on_imagine(self.image_index)
-        thread = threading.Timer(3, self.on_next_stage)
+        thread = threading.Timer(10, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
     def on_white_screen_1(self):
         self.current_stage = "white_screen_1"
         self._on_white_screen_1()
-        thread = threading.Timer(10, self.on_next_stage)
+        thread = threading.Timer(15, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
     def on_rest_1(self):
         self.current_stage = "rest_1"
         self._on_rest_1()
-        thread = threading.Timer(5, self.on_next_stage)
+        thread = threading.Timer(10, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
@@ -100,7 +100,7 @@ class Context:
         self.current_stage = "look_at_image"
         if self.image_index < len(self.image_list):
             self._on_look_at_image()
-            thread = threading.Timer(10, self.on_next_stage)
+            thread = threading.Timer(15, self.on_next_stage)
             thread.daemon = True
             thread.start()
         else:
@@ -109,28 +109,28 @@ class Context:
     def on_rest_2(self):
         self.current_stage = "rest_2"
         self._on_rest_2()
-        thread = threading.Timer(5, self.on_next_stage)
+        thread = threading.Timer(10, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
     def on_close_eyes_imagine(self):
         self.current_stage = "close_eyes_imagine"
         self._on_close_eyes_imagine()
-        thread = threading.Timer(3, self.on_next_stage)
+        thread = threading.Timer(10, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
     def on_white_screen_2(self):
         self.current_stage = "white_screen_2"
         self._on_white_screen_2()
-        thread = threading.Timer(10, self.on_next_stage)
+        thread = threading.Timer(15, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
     def on_rest_3(self):
         self.current_stage = "rest_3"
         self._on_rest_3()
-        thread = threading.Timer(5, self.on_next_cycle)  # Conclude the cycle and start the next one
+        thread = threading.Timer(10, self.on_next_cycle)  # Conclude the cycle and start the next one
         thread.daemon = True
         thread.start()
 
@@ -164,7 +164,7 @@ class Context:
 
 
     def on_next_cycle(self):
-        self.train_index = 1
+        self.train_index = 1  # Start from 'imagine', which is index 1
         self.image_index += 1
         self.cycle_count += 1
 
@@ -172,9 +172,12 @@ class Context:
             self.current_stage = "cycle_complete"
             print(f"Cycle ({self.cycle_count}) Complete")
             self._on_cycle_complete()
-            thread = threading.Timer(5, self.on_imagine)
+
+            # Instead of directly calling on_imagine, just schedule the next stage
+            thread = threading.Timer(5, self.on_next_stage)
             thread.daemon = True
             thread.start()
+
         else:
             print("No more images")
             self.current_stage = "complete"
@@ -212,6 +215,7 @@ def progress_bar(screen, seconds):
     bar_y = screen.get_height() - bar_height
 
     start_time = time.time()
+    duration = 10  # 10 seconds
     # Game loop
     running = True
     while running:
@@ -238,7 +242,7 @@ def draw(screen, ctx, current_image=None):
         instruction_text = [
             "You will be taken through a series of prompts,",
             "with an initial baseline for calibration.",
-            "Between each stage, there will be a 5-second rest with a countdown.",
+            "Between each stage, there will be a 10-second rest with a countdown.",
             "Each prompt stage will be 15 seconds.",
             "There will be 3 prompts, and 4 cycles total.",
             "Hit ESC to exit the session.",
@@ -279,8 +283,9 @@ def draw(screen, ctx, current_image=None):
         if current_image:
             try:
                 image = pygame.image.load(current_image)
-                image = pygame.transform.scale(image, (200, 200))
-                screen.blit(image, (screen.get_width() // 2 - 100, screen.get_height() // 2 - 100))
+                image = pygame.transform.scale(image, (400, 400))
+                image_rect = image.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+                screen.blit(image, image_rect)
             except pygame.error:
                 show_text(screen, "Image not found", font_size=40)
 
@@ -292,8 +297,8 @@ def draw(screen, ctx, current_image=None):
     elif ctx.current_stage == "close_eyes_imagine":
         if current_image:
             image_name = os.path.splitext(os.path.basename(current_image))[0]
-            show_text(screen, f"Close Eyes and Imagine: {image_name}", font_size=40)
-            progress_bar(screen, 3)
+            show_text(screen, f"Imagine: {image_name}", font_size=40)
+            progress_bar(screen)
 
     elif ctx.current_stage == "white_screen_2":
         screen.fill((255, 255, 255))

@@ -65,6 +65,7 @@ class Context:
     def on_baseline(self):
         if not self.baseline_done:  # Ensure baseline happens only once
             self.current_stage = "baseline"
+            self._on_baseline()
             #self._on_baseline()
             self.baseline_done = True
             # Immediately proceed to the next stage
@@ -99,7 +100,7 @@ class Context:
     def on_look_at_image(self):
         self.current_stage = "look_at_image"
         if self.image_index < len(self.image_list):
-            self._on_look_at_image(self.image_list[self.image_index])
+            self._on_look_at_image()
             thread = threading.Timer(10, self.on_next_stage)
             thread.daemon = True
             thread.start()
@@ -171,7 +172,7 @@ class Context:
         if self.image_index < len(self.image_list):
             self.current_stage = "cycle_complete"
             print(f"Cycle ({self.cycle_count}) Complete")
-            self._on_cycle_complete(self.cycle_count)
+            self._on_cycle_complete()
             thread = threading.Timer(5, self.on_imagine)
             thread.daemon = True
             thread.start()

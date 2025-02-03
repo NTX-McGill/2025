@@ -49,15 +49,14 @@ def on_white_screen():
 def on_rest():
     marker_outlet.send_transition(STATUS_TRANSITION)
 
-def on_look_at_image(image):
-    marker_outlet.send_new_image(STATUS_LOOK)
+def on_look_at_image():
+    marker_outlet.send_transition(STATUS_LOOK)
 
 def on_close_eyes_imagine():
     marker_outlet.send_transition(STATUS_IMAGINE_EYES_CLOSED)
 
-def on_cycle_complete(cycle):
+def on_cycle_complete():
     marker_outlet.send(new_status=STATUS_TRANSITION, new_image=IMAGE_NONE)
-    pass
 
 def create_train_sequence():
     return [

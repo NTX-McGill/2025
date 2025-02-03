@@ -73,6 +73,7 @@ class Context:
             thread = threading.Timer(15, self.on_next_stage,) # Proceed to the next stage
             thread.daemon = True
             thread.start()
+            
 
 
     def on_imagine(self):
@@ -183,6 +184,7 @@ class Context:
             self.current_stage = "complete"
             self._on_stop()
 
+
 def show_text(screen, text, font_size=40, color=(0, 0, 100), y_offset=0):
     font = pygame.font.SysFont("Times New Roman", font_size, True, False)
     surface = font.render(text, True, color)
@@ -207,15 +209,15 @@ def update(ctx):
                 pygame.quit()
                 sys.exit()
 
-def progress_bar(screen, seconds):
+def progress_bar(screen):
     progress = 0
     bar_width = screen.get_width()
     bar_height = 150
     bar_x = (screen.get_width() - bar_width) // 2  # Center horizontally
-    bar_y = screen.get_height() - bar_height
+    bar_y = screen.get_height() - bar_height 
 
     start_time = time.time()
-    duration = 10  # 10 seconds
+    duration = 10  # 5 seconds
     # Game loop
     running = True
     while running:
@@ -224,13 +226,13 @@ def progress_bar(screen, seconds):
                 running = False
         # Calculate progress based on elapsed time
         elapsed_time = time.time() - start_time
-        progress = min(elapsed_time / seconds, 1.0)  # Clamp to 1.0 maximum
+        progress = min(elapsed_time / duration, 1.0)  # Clamp to 1.0 maximum
         # Draw progress bar
-
+        
         pygame.draw.rect(screen, (181, 220, 245), pygame.Rect(bar_x, bar_y, bar_width * progress, bar_height))
         pygame.display.flip()
         # Exit after 5 seconds
-        if elapsed_time >= seconds:
+        if elapsed_time >= duration:
             time.sleep(0.5)  # Pause briefly at the end
             running = False
 
@@ -269,7 +271,7 @@ def draw(screen, ctx, current_image=None):
         if current_image:
             image_name = os.path.splitext(os.path.basename(current_image))[0]
             show_text(screen, f"Imagine: {image_name}", font_size=40)
-            progress_bar(screen, 3)
+            progress_bar(screen)
 
     elif ctx.current_stage == "white_screen_1":
         screen.fill((255, 255, 255))
@@ -277,7 +279,7 @@ def draw(screen, ctx, current_image=None):
     elif ctx.current_stage == "rest_1":
         screen.fill((255, 255, 255))
         show_text(screen, f"REST", font_size=40)
-        progress_bar(screen, 5)
+        progress_bar(screen)
 
     elif ctx.current_stage == "look_at_image":
         if current_image:
@@ -292,7 +294,7 @@ def draw(screen, ctx, current_image=None):
     elif ctx.current_stage == "rest_2":
         screen.fill((255, 255, 255))
         show_text(screen, f"REST", font_size=40)
-        progress_bar(screen, 5)
+        progress_bar(screen)
 
     elif ctx.current_stage == "close_eyes_imagine":
         if current_image:
@@ -306,7 +308,7 @@ def draw(screen, ctx, current_image=None):
     elif ctx.current_stage == "rest_3":
         screen.fill((255, 255, 255))
         show_text(screen, f"REST", font_size=40)
-        progress_bar(screen, 5)
+        progress_bar(screen)
 
     elif ctx.current_stage == "cycle_complete":
         screen.fill((0, 0, 128))
@@ -432,3 +434,4 @@ if __name__ == "__main__":
         on_cycle_complete=on_cycle_complete,
         on_stop=on_stop,
     )
+

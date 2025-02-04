@@ -79,7 +79,7 @@ class Context:
     def on_imagine(self):
         self.current_stage = "imagine"
         self._on_imagine(self.image_index)
-        thread = threading.Timer(10, self.on_next_stage)
+        thread = threading.Timer(3, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
@@ -117,7 +117,7 @@ class Context:
     def on_close_eyes_imagine(self):
         self.current_stage = "close_eyes_imagine"
         self._on_close_eyes_imagine()
-        thread = threading.Timer(10, self.on_next_stage)
+        thread = threading.Timer(3, self.on_next_stage)
         thread.daemon = True
         thread.start()
 

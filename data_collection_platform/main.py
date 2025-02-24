@@ -38,11 +38,12 @@ def on_stop():
     print("Stopping session... Saving data and closing streams.")
 
     # Save all recorded EEG data
-    collector.save_and_close()
+    #collector.save_and_close()
+    collector.stop()
 
     # Stop OpenBCI streaming
     try:
-        from backend.bci_streamer import BCIStreamer
+        from bci_streamer import BCIStreamer
 
         bci_streamer = BCIStreamer()
         bci_streamer.stop_stream()
@@ -50,7 +51,7 @@ def on_stop():
         print(f"Warning: Unable to stop EEG stream properly: {e}")
 
     # Send LSL stop marker
-    marker_outlet.send_stop_marker()
+    #marker_outlet.send_stop_marker()
 
     print("Session successfully stopped.")
 

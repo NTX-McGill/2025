@@ -53,7 +53,7 @@ class Context:
         self._on_white_screen_2 = on_white_screen_2
         self._on_rest_3 = on_rest_3
         self._on_cycle_complete = on_cycle_complete
-        self._on_next_cycle = on_next_cycle
+        self._on_next_cycle = on_cycle_start
         self._on_stop = on_stop
 
     def on_home_screen(self):
@@ -182,7 +182,7 @@ class Context:
         else:
             print("No more images")
             self.current_stage = "complete"
-            #self._on_stop()
+            self._on_stop()
 
 
 def fade_screen(screen, duration=500):
@@ -350,10 +350,12 @@ def update(ctx):
                     ctx.on_next_stage()
             elif event.key == pygame.K_y and ctx.current_stage == "cycle_complete":
                 print("User selected 'Yes'. Continuing to next cycle.")
+                ctx._on_next_cycle()
                 ctx.on_next_stage()
             elif event.key == pygame.K_n and ctx.current_stage == "cycle_complete":
                 print("User selected 'No'. Stopping session.")
-                #ctx._on_stop()
+                ctx._on_stop()
+
                 pygame.quit()
                 sys.exit()
             elif event.key == pygame.K_ESCAPE:
@@ -377,6 +379,7 @@ def runPyGame(
     on_look_at_image,
     on_close_eyes_imagine,
     on_cycle_complete,
+    on_cycle_start,
     on_stop,
 ):
     pygame.init()
@@ -401,6 +404,7 @@ def runPyGame(
         on_white_screen_2=on_white_screen,
         on_rest_3=on_rest,
         on_cycle_complete=on_cycle_complete,
+        on_cycle_start=on_cycle_start,
         on_stop=on_stop,
     )
 
@@ -457,6 +461,9 @@ if __name__ == "__main__":
 
     def on_cycle_complete(cycle):
         print(f"Cycle {cycle} Complete")
+    
+    def on_cycle_start():
+        print(f"Cycle Starting")
 
     def on_stop():
         print("Task Complete")
@@ -476,5 +483,6 @@ if __name__ == "__main__":
         on_look_at_image=on_look_at_image,
         on_close_eyes_imagine=on_close_eyes_imagine,
         on_cycle_complete=on_cycle_complete,
+        on_cycle_start=on_cycle_start,
         on_stop=on_stop,
     )

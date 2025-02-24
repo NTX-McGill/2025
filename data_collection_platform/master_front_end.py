@@ -28,7 +28,7 @@ class Context:
         on_white_screen_2,
         on_rest_3,
         on_cycle_complete,
-        on_next_cycle,
+        on_cycle_start,
         on_stop,
     ):
         self.train_sequence = train_sequence

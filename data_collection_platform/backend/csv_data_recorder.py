@@ -80,6 +80,7 @@ class CSVDataRecorder:
         self.marker_inlet = find_marker_inlet() if find_streams else None
 
         self.recording = False
+        self.pause = False
         self.ready = self.eeg_inlet is not None and self.marker_inlet is not None
 
         if self.ready:
@@ -129,10 +130,6 @@ class CSVDataRecorder:
         This function should not be called directly. Use start() instead.
         """
 
-        # Flush the inlets to remove old data
-        self.eeg_inlet.flush()
-        self.marker_inlet.flush()
-
         timestamp_list = np.array([])
         channel_lists: typing.List[np.ndarray] = list()
         image_id_list = np.array([], dtype=np.int8)
@@ -145,11 +142,18 @@ class CSVDataRecorder:
         status = STATUS_TRANSITION
         image = IMAGE_NONE
 
+        # Flush the inlets to remove old data
+        self.eeg_inlet.flush()
+        self.marker_inlet.flush()
+
         while self.recording:
             # PROBLEM - we need to merge the two (EEG and Marker) LSL streams into one
             # Assume we never get two markers for one EEG sample
             # Therefore when we pull a marker, we can attach it to the next pulled EEG sample
             # This effectively discards the marker timestamps but the EEG is recorded so quickly that it doesn't matter (?)
+
+            if self.pause:
+                continue
 
             eeg_sample, eeg_timestamp = self.eeg_inlet.pull_sample()
             marker_sample, _ = self.marker_inlet.pull_sample(0.0)
@@ -220,7 +224,9 @@ class CSVDataRecorder:
         df["baseline"] = (status_list == STATUS_BASELINE).astype(int)
         df["imagine"] = (status_list == STATUS_IMAGINE).astype(int)
         df["look"] = (status_list == STATUS_LOOK).astype(int)
-        df["imagine_eyes_closed"] = (status_list == STATUS_IMAGINE_EYES_CLOSED).astype(int)
+        df["imagine_eyes_closed"] = (status_list == STATUS_IMAGINE_EYES_CLOSED).astype(
+            int
+        )
         df["done"] = (status_list == STATUS_DONE).astype(int)
 
         for i in range(self.num_imgs):
@@ -233,6 +239,15 @@ class CSVDataRecorder:
         df.to_csv(
             filepath, mode="a", index=False, header=(not os.path.exists(filepath))
         )
+
+    def pause(self):
+        self.pause = True
+
+    def unpause(self):
+        # Flush the inlets to remove old data
+        self.eeg_inlet.flush()
+        self.marker_inlet.flush()
+        self.pause = False
 
     def stop(self):
         """Finish recording data to a CSV file."""

@@ -32,7 +32,25 @@ def on_start():
         print("Data not ready - quit and try again.")
 
 def on_stop():
-    collector.stop()
+    """Handles stopping the session from the checkpoint."""
+    print("Stopping session... Saving data and closing streams.")
+    
+    # Save all recorded EEG data
+    collector.save_and_close()
+
+    # Stop OpenBCI streaming
+    try:
+        from backend.bci_streamer import BCIStreamer
+        bci_streamer = BCIStreamer()
+        bci_streamer.stop_stream()
+    except Exception as e:
+        print(f"Warning: Unable to stop EEG stream properly: {e}")
+
+    # Send LSL stop marker
+    marker_outlet.send_stop_marker()
+
+    print("Session successfully stopped.")
+
 
 def on_home_screen():
     marker_outlet.send_transition(STATUS_TRANSITION)
@@ -96,20 +114,21 @@ def main():
     ]
 
     runPyGame(
-        train_sequence=sequence,
-        work_duration=15,
-        rest_duration=10,
-        image_list=image_list,
-        on_home_screen=on_home_screen,
-        on_baseline=on_baseline,
-        on_imagine=on_imagine,
-        on_white_screen=on_white_screen,
-        on_rest=on_rest,
-        on_look_at_image=on_look_at_image,
-        on_close_eyes_imagine=on_close_eyes_imagine,
-        on_cycle_complete=on_cycle_complete,
-        on_stop=on_stop,
+    train_sequence=sequence,
+    work_duration=15,
+    rest_duration=10,
+    image_list=image_list,
+    on_home_screen=on_home_screen,
+    on_baseline=on_baseline,
+    on_imagine=on_imagine,
+    on_white_screen=on_white_screen,
+    on_rest=on_rest,
+    on_look_at_image=on_look_at_image,
+    on_close_eyes_imagine=on_close_eyes_imagine,
+    on_cycle_complete=on_cycle_complete,  # The checkpoint is inside this function
+    on_stop=on_stop,  # Now properly saves and stops EEG
     )
+
 
 # Entry point
 if __name__ == "__main__":

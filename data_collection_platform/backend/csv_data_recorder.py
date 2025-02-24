@@ -251,3 +251,11 @@ def test_recorder():
         collector.stop()
         print(f"Finished test run {i+1}")
         time.sleep(1)
+
+    def save_and_close(self):
+        """Save remaining data and close the file properly."""
+        print("Saving EEG data before exiting...")
+        self.file.flush()
+        os.fsync(self.file.fileno())  # Ensure data is written to disk
+        self.file.close()
+        print("Data saved. Session closed.")

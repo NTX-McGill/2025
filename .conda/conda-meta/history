@@ -1,0 +1,21 @@
+==> 2025-02-24 12:09:18 <==
+# cmd: /Users/alliemurdock/miniconda3/lib/python3.12/site-packages/conda/__main__.py create --yes --prefix .conda python=3.12
+# conda version: 25.1.1
++anaconda/noarch::tzdata-2025a-h04d1e81_0
++anaconda/osx-arm64::bzip2-1.0.8-h80987f9_6
++anaconda/osx-arm64::ca-certificates-2024.12.31-hca03da5_0
++anaconda/osx-arm64::expat-2.6.4-h313beb8_0
++anaconda/osx-arm64::libcxx-14.0.6-h848a8c0_0
++anaconda/osx-arm64::libffi-3.4.4-hca03da5_1
++anaconda/osx-arm64::ncurses-6.4-h313beb8_0
++anaconda/osx-arm64::openssl-3.0.15-h80987f9_0
++anaconda/osx-arm64::pip-25.0-py312hca03da5_0
++anaconda/osx-arm64::python-3.12.9-h99e199e_0
++anaconda/osx-arm64::readline-8.2-h1a28f6b_0
++anaconda/osx-arm64::setuptools-75.8.0-py312hca03da5_0
++anaconda/osx-arm64::sqlite-3.45.3-h80987f9_0
++anaconda/osx-arm64::tk-8.6.14-h6ba3021_0
++anaconda/osx-arm64::wheel-0.45.1-py312hca03da5_0
++anaconda/osx-arm64::xz-5.6.4-h80987f9_1
++anaconda/osx-arm64::zlib-1.2.13-h18a0788_1
+# update specs: ['python=3.12']

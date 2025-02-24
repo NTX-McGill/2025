@@ -51,3 +51,11 @@ class MarkerOutlet:
     def send_transition(self, new_status):
         """Send a transition marker to the LSL stream."""
         self.send(new_status=new_status)
+
+    def send_checkpoint_marker(self):
+        """Send checkpoint marker at the end of each cycle."""
+        self.send_marker(999)  # Unique marker for checkpoints
+
+    def send_stop_marker(self):
+        """Send stop marker when session ends."""
+        self.send_marker(0)  # Marker 0 indicates session stopped

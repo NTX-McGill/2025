@@ -1,5 +1,3 @@
-#updated
-
 from OpenBCI_LSL.lib.open_bci_v3 import OpenBCIBoard
 import threading
 import time
@@ -39,3 +37,9 @@ class BciStreamer:
                 line = ""
         print("Streaming paused.\n")
 
+
+    def stop_stream(self):
+        """Stop streaming EEG data gracefully."""
+        print("Stopping EEG stream...")
+        self.inlet.close_stream()
+        print("EEG stream stopped.")

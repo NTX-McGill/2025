@@ -144,6 +144,7 @@ def main():
         on_look_at_image=on_look_at_image,
         on_close_eyes_imagine=on_close_eyes_imagine,
         on_cycle_complete=on_cycle_complete,  # The checkpoint is inside this function
+        on_next_cycle=on_next_cycle,
         on_stop=on_stop,  # Now properly saves and stops EEG
     )
 

@@ -9,6 +9,7 @@ screen_width = 1200  # Set your desired width
 screen_height = 800  # Set your desired height
 screen = pygame.display.set_mode((screen_width, screen_height))  # Windowed mode
 
+
 class Context:
     def __init__(
         self,
@@ -27,6 +28,7 @@ class Context:
         on_white_screen_2,
         on_rest_3,
         on_cycle_complete,
+        on_next_cycle,
         on_stop,
     ):
         self.train_sequence = train_sequence
@@ -51,6 +53,7 @@ class Context:
         self._on_white_screen_2 = on_white_screen_2
         self._on_rest_3 = on_rest_3
         self._on_cycle_complete = on_cycle_complete
+        self._on_next_cycle = on_next_cycle
         self._on_stop = on_stop
 
     def on_home_screen(self):
@@ -61,20 +64,20 @@ class Context:
     def on_instruction_screen(self):
         self.current_stage = "instruction_screen"
 
-
     def on_baseline(self):
         if not self.baseline_done:  # Ensure baseline happens only once
             self.current_stage = "baseline"
             self._on_baseline()
-            #self._on_baseline()
+            # self._on_baseline()
             self.baseline_done = True
             # Immediately proceed to the next stage
             self.train_index += 1
-            thread = threading.Timer(10, self.on_next_stage,) # Proceed to the next stage
+            thread = threading.Timer(
+                10,
+                self.on_next_stage,
+            )  # Proceed to the next stage
             thread.daemon = True
             thread.start()
-            
-
 
     def on_imagine(self):
         self.current_stage = "imagine"
@@ -131,7 +134,9 @@ class Context:
     def on_rest_3(self):
         self.current_stage = "rest_3"
         self._on_rest_3()
-        thread = threading.Timer(10, self.on_next_cycle)  # Conclude the cycle and start the next one
+        thread = threading.Timer(
+            10, self.on_next_cycle
+        )  # Conclude the cycle and start the next one
         thread.daemon = True
         thread.start()
 
@@ -163,9 +168,8 @@ class Context:
         elif next_stage == "rest_3":
             self.on_rest_3()
 
-
     def on_next_cycle(self):
-   
+
         self.train_index = 1  # Reset to 'imagine'
         self.image_index += 1
         self.cycle_count += 1
@@ -173,13 +177,12 @@ class Context:
         if self.image_index < len(self.image_list):
             self.current_stage = "cycle_complete"
             print(f"Cycle ({self.cycle_count}) Complete - Waiting for User Input")
-            
+
             # Now, the main event loop (update function) will handle user input (Y/N)
         else:
             print("No more images")
             self.current_stage = "complete"
             self._on_stop()
-
 
 
 def fade_screen(screen, duration=500):
@@ -191,14 +194,18 @@ def fade_screen(screen, duration=500):
         pygame.display.update()
         pygame.time.delay(duration // 50)
 
+
 def show_text(screen, text, font_size=30, color=(51, 51, 51), y_offset=0, align="left"):
     font = pygame.font.SysFont("Arial", font_size, True, False)
     surface = font.render(text, True, color)
     if align == "center":
-        text_rect = surface.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2 + y_offset))
+        text_rect = surface.get_rect(
+            center=(screen.get_width() // 2, screen.get_height() // 2 + y_offset)
+        )
     else:
         text_rect = surface.get_rect(left=50, top=screen.get_height() // 3 + y_offset)
     screen.blit(surface, text_rect)
+
 
 def progress_bar(screen, duration):
     bar_width = screen.get_width() - 100
@@ -217,12 +224,17 @@ def progress_bar(screen, duration):
         elapsed_time = time.time() - start_time
         progress = min(elapsed_time / duration, 1.0)  # Scale progress correctly
 
-        pygame.draw.rect(screen, (90, 125, 154), pygame.Rect(bar_x, bar_y, bar_width * progress, bar_height))
+        pygame.draw.rect(
+            screen,
+            (90, 125, 154),
+            pygame.Rect(bar_x, bar_y, bar_width * progress, bar_height),
+        )
         pygame.display.flip()
 
         if elapsed_time >= duration:
             time.sleep(0.3)  # Shorter pause at the end
             running = False
+
 
 def draw(screen, ctx, current_image=None):
     if ctx.current_stage == "instruction_screen":
@@ -240,8 +252,16 @@ def draw(screen, ctx, current_image=None):
 
     elif ctx.current_stage == "home_screen":
         screen.fill((240, 240, 240))
-        show_text(screen, "NTech Data Collection Interface 2025", font_size=30, align="center", y_offset=-30)
-        show_text(screen, "Press SPACE to Start", font_size=35, align="center", y_offset=30)
+        show_text(
+            screen,
+            "NTech Data Collection Interface 2025",
+            font_size=30,
+            align="center",
+            y_offset=-30,
+        )
+        show_text(
+            screen, "Press SPACE to Start", font_size=35, align="center", y_offset=30
+        )
 
     elif ctx.current_stage == "baseline":
         screen.fill((240, 240, 240))
@@ -266,7 +286,9 @@ def draw(screen, ctx, current_image=None):
             try:
                 image = pygame.image.load(current_image)
                 image = pygame.transform.scale(image, (400, 400))
-                image_rect = image.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+                image_rect = image.get_rect(
+                    center=(screen.get_width() // 2, screen.get_height() // 2)
+                )
                 screen.blit(image, image_rect)
             except pygame.error:
                 show_text(screen, "Image not found", font_size=40, align="center")
@@ -283,12 +305,32 @@ def draw(screen, ctx, current_image=None):
 
     elif ctx.current_stage == "cycle_complete":
         screen.fill((30, 58, 95))  # Keep blue screen
-        show_text(screen, "Continue?", font_size=50, color=(255, 255, 255), align="center", y_offset=-30)
-        show_text(screen, "[YES]    [NO]", font_size=40, color=(255, 255, 255), align="center", y_offset=30)
+        show_text(
+            screen,
+            "Continue?",
+            font_size=50,
+            color=(255, 255, 255),
+            align="center",
+            y_offset=-30,
+        )
+        show_text(
+            screen,
+            "[YES]    [NO]",
+            font_size=40,
+            color=(255, 255, 255),
+            align="center",
+            y_offset=30,
+        )
 
     elif ctx.current_stage == "complete":
         screen.fill((0, 0, 128))
-        show_text(screen, "No more images. Task Complete.", font_size=40, color=(255, 255, 255), align="center")
+        show_text(
+            screen,
+            "No more images. Task Complete.",
+            font_size=40,
+            color=(255, 255, 255),
+            align="center",
+        )
 
     pygame.display.flip()
 
@@ -321,6 +363,7 @@ def update(ctx):
 
 # Fix for main loop in runPyGame to pass ctx instead of ctx.on_baseline
 
+
 def runPyGame(
     train_sequence,
     work_duration,
@@ -328,7 +371,7 @@ def runPyGame(
     image_list,
     on_home_screen,
     on_baseline,
-    on_imagine, # (image_id) -> None
+    on_imagine,  # (image_id) -> None
     on_white_screen,
     on_rest,
     on_look_at_image,
@@ -365,7 +408,11 @@ def runPyGame(
 
     while True:
         update(ctx)
-        current_image = ctx.image_list[ctx.image_index] if ctx.image_index < len(ctx.image_list) else None
+        current_image = (
+            ctx.image_list[ctx.image_index]
+            if ctx.image_index < len(ctx.image_list)
+            else None
+        )
         draw(screen, ctx, current_image)
 
 
@@ -379,7 +426,7 @@ if __name__ == "__main__":
         "rest_2",
         "close_eyes_imagine",
         "white_screen_2",
-        "rest_3"
+        "rest_3",
     ]
     image_list = [
         "bci_images/Apple.png",
@@ -431,4 +478,3 @@ if __name__ == "__main__":
         on_cycle_complete=on_cycle_complete,
         on_stop=on_stop,
     )
-

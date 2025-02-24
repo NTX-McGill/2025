@@ -21,6 +21,7 @@ logging.basicConfig(
     format="%(asctime)s %(name)s %(levelname)s %(message)s",
 )
 
+
 # Callback functions for different stages
 def on_start():
     collector.find_streams()
@@ -31,16 +32,18 @@ def on_start():
     else:
         print("Data not ready - quit and try again.")
 
+
 def on_stop():
     """Handles stopping the session from the checkpoint."""
     print("Stopping session... Saving data and closing streams.")
-    
+
     # Save all recorded EEG data
     collector.save_and_close()
 
     # Stop OpenBCI streaming
     try:
         from backend.bci_streamer import BCIStreamer
+
         bci_streamer = BCIStreamer()
         bci_streamer.stop_stream()
     except Exception as e:
@@ -55,26 +58,38 @@ def on_stop():
 def on_home_screen():
     marker_outlet.send_transition(STATUS_TRANSITION)
 
+
 def on_baseline():
     marker_outlet.send_transition(STATUS_BASELINE)
+
 
 def on_imagine(image_id: int):
     marker_outlet.send(new_image=image_id, new_status=STATUS_IMAGINE)
 
+
 def on_white_screen():
     marker_outlet.send_transition(STATUS_TRANSITION)
+
 
 def on_rest():
     marker_outlet.send_transition(STATUS_TRANSITION)
 
+
 def on_look_at_image():
     marker_outlet.send_transition(STATUS_LOOK)
+
 
 def on_close_eyes_imagine():
     marker_outlet.send_transition(STATUS_IMAGINE_EYES_CLOSED)
 
+
 def on_cycle_complete():
-    marker_outlet.send(new_status=STATUS_TRANSITION, new_image=IMAGE_NONE)
+    collector.pause()
+
+
+def on_next_cycle():
+    collector.unpause()
+
 
 def create_train_sequence():
     return [
@@ -89,6 +104,7 @@ def create_train_sequence():
         "rest_3",
     ]
 
+
 # Main data collection function
 def main():
     # Prompt user to enter CSV filename
@@ -100,7 +116,9 @@ def main():
         print(f"Starting data recording... Saving to: {filename}")
         collector.start(filename=filename)
     else:
-        print("LSL streams not ready. Please ensure EEG and Marker streams are running.")
+        print(
+            "LSL streams not ready. Please ensure EEG and Marker streams are running."
+        )
         return
 
     sequence = create_train_sequence()
@@ -114,23 +132,22 @@ def main():
     ]
 
     runPyGame(
-    train_sequence=sequence,
-    work_duration=15,
-    rest_duration=10,
-    image_list=image_list,
-    on_home_screen=on_home_screen,
-    on_baseline=on_baseline,
-    on_imagine=on_imagine,
-    on_white_screen=on_white_screen,
-    on_rest=on_rest,
-    on_look_at_image=on_look_at_image,
-    on_close_eyes_imagine=on_close_eyes_imagine,
-    on_cycle_complete=on_cycle_complete,  # The checkpoint is inside this function
-    on_stop=on_stop,  # Now properly saves and stops EEG
+        train_sequence=sequence,
+        work_duration=15,
+        rest_duration=10,
+        image_list=image_list,
+        on_home_screen=on_home_screen,
+        on_baseline=on_baseline,
+        on_imagine=on_imagine,
+        on_white_screen=on_white_screen,
+        on_rest=on_rest,
+        on_look_at_image=on_look_at_image,
+        on_close_eyes_imagine=on_close_eyes_imagine,
+        on_cycle_complete=on_cycle_complete,  # The checkpoint is inside this function
+        on_stop=on_stop,  # Now properly saves and stops EEG
     )
 
 
 # Entry point
 if __name__ == "__main__":
     main()
-

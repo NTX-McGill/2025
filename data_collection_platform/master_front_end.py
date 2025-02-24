@@ -178,7 +178,7 @@ class Context:
         else:
             print("No more images")
             self.current_stage = "complete"
-            self._on_stop()
+            #self._on_stop()
 
 
 
@@ -311,7 +311,7 @@ def update(ctx):
                 ctx.on_next_stage()
             elif event.key == pygame.K_n and ctx.current_stage == "cycle_complete":
                 print("User selected 'No'. Stopping session.")
-                ctx._on_stop()
+                #ctx._on_stop()
                 pygame.quit()
                 sys.exit()
             elif event.key == pygame.K_ESCAPE:

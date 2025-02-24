@@ -110,7 +110,6 @@ def main():
         "bci_images/Apple.png",
         "bci_images/McGill Arts Building.png",
         "bci_images/Door Handle.png",
-        "bci_images/Obama.png",
     ]
 
     runPyGame(

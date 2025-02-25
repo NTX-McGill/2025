@@ -2,12 +2,14 @@ import pylsl
 import os
 import time
 import threading
+
 import pandas as pd
 import numpy as np
 import typing
 import logging
 
 from pathlib import Path
+
 from constants import *
 
 
@@ -80,7 +82,7 @@ class CSVDataRecorder:
         self.marker_inlet = find_marker_inlet() if find_streams else None
 
         self.recording = False
-        self.pause = False
+        self.paused = False
         self.ready = self.eeg_inlet is not None and self.marker_inlet is not None
 
         if self.ready:
@@ -152,7 +154,7 @@ class CSVDataRecorder:
             # Therefore when we pull a marker, we can attach it to the next pulled EEG sample
             # This effectively discards the marker timestamps but the EEG is recorded so quickly that it doesn't matter (?)
 
-            if self.pause:
+            if self.paused:
                 continue
 
             eeg_sample, eeg_timestamp = self.eeg_inlet.pull_sample()
@@ -241,13 +243,13 @@ class CSVDataRecorder:
         )
 
     def pause(self):
-        self.pause = True
+        self.paused = True
 
     def unpause(self):
         # Flush the inlets to remove old data
         self.eeg_inlet.flush()
         self.marker_inlet.flush()
-        self.pause = False
+        self.paused = False
 
     def stop(self):
         """Finish recording data to a CSV file."""

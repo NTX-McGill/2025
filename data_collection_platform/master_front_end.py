@@ -176,6 +176,7 @@ class Context:
 
         if self.image_index < len(self.image_list):
             self.current_stage = "cycle_complete"
+            self._on_cycle_complete()
             print(f"Cycle ({self.cycle_count}) Complete - Waiting for User Input")
 
             # Now, the main event loop (update function) will handle user input (Y/N)
@@ -461,7 +462,7 @@ if __name__ == "__main__":
 
     def on_cycle_complete(cycle):
         print(f"Cycle {cycle} Complete")
-    
+
     def on_cycle_start():
         print(f"Cycle Starting")
 

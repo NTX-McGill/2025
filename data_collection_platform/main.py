@@ -1,6 +1,7 @@
 import datetime
 import logging
 import pathlib
+import random
 from backend.csv_data_recorder import CSVDataRecorder
 from backend.marker_outlet import MarkerOutlet
 from master_front_end import runPyGame
@@ -93,8 +94,8 @@ def on_cycle_start():
 
 
 def create_train_sequence():
-    return [
-        "baseline",
+    
+    sequence = ["baseline",
         "imagine",
         "white_screen_1",
         "rest_1",
@@ -104,6 +105,8 @@ def create_train_sequence():
         "white_screen_2",
         "rest_3",
     ]
+
+    return sequence
 
 
 # Main data collection function
@@ -133,6 +136,7 @@ def main():
 
     runPyGame(
         train_sequence=sequence,
+        random_sequence=None,
         work_duration=15,
         rest_duration=10,
         image_list=image_list,

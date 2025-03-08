@@ -3,6 +3,7 @@ import pygame
 from pygame.locals import *
 import time
 import threading
+import random
 import os  # To extract the image name from the file path
 
 screen_width = 1200  # Set your desired width
@@ -14,6 +15,7 @@ class Context:
     def __init__(
         self,
         train_sequence,
+        random_sequence,
         work_duration,
         rest_duration,
         image_list,
@@ -40,6 +42,10 @@ class Context:
         self.work_duration = work_duration
         self.rest_duration = rest_duration
         self.baseline_done = False  # Ensure baseline happens only once
+        self.random_trial_count = 0
+        self.in_random_cycle=False
+        self.image_indices = []
+        self.random_sequence = random_sequence
 
         # Callbacks for each stage
         self._on_home_screen = on_home_screen
@@ -135,7 +141,7 @@ class Context:
         self.current_stage = "rest_3"
         self._on_rest_3()
         thread = threading.Timer(
-            10, self.on_next_cycle
+            10, self.on_next_stage
         )  # Conclude the cycle and start the next one
         thread.daemon = True
         thread.start()
@@ -143,10 +149,18 @@ class Context:
     def on_next_stage(self):
         # Check if we have more stages left
         if self.train_index >= len(self.train_sequence):
+            self.on_next_cycle()
             return  # No more stages in the current cycle
-
+        
         next_stage = self.train_sequence[self.train_index]
         self.train_index += 1  # Increment train index for the next stage
+
+        #update image if in random trial
+        if self.in_random_cycle:
+            self.image_index = self.image_indices[self.random_trial_count]
+            if (next_stage == "rest_1" or next_stage == "rest_2" or next_stage == "rest_3"):
+                self.random_trial_count+=1
+
 
         print(f"Transitioning to: {next_stage}, train_index: {self.train_index}")
 
@@ -174,16 +188,54 @@ class Context:
         self.image_index += 1
         self.cycle_count += 1
 
-        if self.image_index < len(self.image_list):
+        if not self.in_random_cycle  and self.image_index < len(self.image_list):
+            
             self.current_stage = "cycle_complete"
             self._on_cycle_complete()
             print(f"Cycle ({self.cycle_count}) Complete - Waiting for User Input")
 
             # Now, the main event loop (update function) will handle user input (Y/N)
+        elif self.in_random_cycle == False:
+            self.current_stage = "priming_complete"
+            self._on_cycle_complete()
+            print("Priming phase complete. Continue to random trials?")
+            
+            
         else:
-            print("No more images")
             self.current_stage = "complete"
             self._on_stop()
+
+
+    def random_cycle(self,num_trials=6,seed=1):
+        self.train_sequence = []
+        self.image_indices = []
+
+        stages = [["imagine", "white_screen_1","rest_1"],
+        ["look_at_image","rest_2"],
+        ["close_eyes_imagine","white_screen_2","rest_3"],]
+        random.seed(seed)
+
+        if self.random_sequence == None:
+            for i in range(num_trials):
+                self.image_indices.append(random.randint(0,len(self.image_list)-1))
+                self.train_sequence.extend(random.choice(stages))
+        else:
+            self.train_sequence = self.random_sequence
+            for stage in self.random_sequence:
+                if (stage == "imagine" or stage == "look_at_image" or stage == "close_eyes_imagine"):
+                    self.image_indices.append(random.randint(0,len(self.image_list)-1))
+        
+        print("Ramdom sequence initialized: ",self.train_sequence)
+        print("Random image indices: ",self.image_indices)
+        
+        self.in_random_cycle = True
+        self.random_trial_count = 0
+        self.train_index = 0
+        self.image_index=self.image_indices[0]
+        
+        self.on_next_stage()
+
+
 
 
 def fade_screen(screen, duration=500):
@@ -322,7 +374,24 @@ def draw(screen, ctx, current_image=None):
             align="center",
             y_offset=30,
         )
-
+    elif ctx.current_stage == "priming_complete":
+        screen.fill((30, 58, 95))  # Keep blue screen
+        show_text(
+            screen,
+            "Priming Phase Complete. Continue?",
+            font_size=50,
+            color=(255, 255, 255),
+            align="center",
+            y_offset=-30,
+        )
+        show_text(
+            screen,
+            "[YES]    [NO]",
+            font_size=40,
+            color=(255, 255, 255),
+            align="center",
+            y_offset=30,
+        )
     elif ctx.current_stage == "complete":
         screen.fill((0, 0, 128))
         show_text(
@@ -349,11 +418,16 @@ def update(ctx):
                     ctx.on_baseline()
                 elif ctx.current_stage == "baseline":
                     ctx.on_next_stage()
-            elif event.key == pygame.K_y and ctx.current_stage == "cycle_complete":
-                print("User selected 'Yes'. Continuing to next cycle.")
-                ctx._on_next_cycle()
-                ctx.on_next_stage()
-            elif event.key == pygame.K_n and ctx.current_stage == "cycle_complete":
+            elif event.key == pygame.K_y: 
+                if ctx.current_stage == "cycle_complete":
+                    print("User selected 'Yes'. Continuing to next cycle.")
+                    ctx._on_next_cycle()
+                    ctx.on_next_stage()
+                elif  ctx.current_stage == "priming_complete":
+                    print("User selected 'Yes'. Continuing to random trials.")
+                    ctx._on_next_cycle()
+                    ctx.random_cycle()
+            elif event.key == pygame.K_n and (ctx.current_stage == "cycle_complete"or ctx.current_stage == "priming_complete"):
                 print("User selected 'No'. Stopping session.")
                 ctx._on_stop()
 
@@ -369,6 +443,7 @@ def update(ctx):
 
 def runPyGame(
     train_sequence,
+    random_sequence,
     work_duration,
     rest_duration,
     image_list,
@@ -391,6 +466,7 @@ def runPyGame(
 
     ctx = Context(
         train_sequence=train_sequence,
+        random_sequence=random_sequence,
         work_duration=work_duration,
         rest_duration=rest_duration,
         image_list=image_list,
@@ -473,6 +549,7 @@ if __name__ == "__main__":
 
     runPyGame(
         train_sequence=train_sequence,
+        random_sequence=None,
         work_duration=15,
         rest_duration=5,
         image_list=image_list,

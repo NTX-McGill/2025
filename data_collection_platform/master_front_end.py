@@ -70,7 +70,7 @@ class Context:
     def on_instruction_screen(self):
         self.current_stage = "instruction_screen"
 
-    def on_baseline(self):
+    def on_baseline(self,time=10):
         if not self.baseline_done:  # Ensure baseline happens only once
             self.current_stage = "baseline"
             self._on_baseline()
@@ -79,69 +79,69 @@ class Context:
             # Immediately proceed to the next stage
             self.train_index += 1
             thread = threading.Timer(
-                10,
+                time,
                 self.on_next_stage,
             )  # Proceed to the next stage
             thread.daemon = True
             thread.start()
 
-    def on_imagine(self):
+    def on_imagine(self,time=4):
         self.current_stage = "imagine"
         self._on_imagine(self.image_index)
-        thread = threading.Timer(2, self.on_next_stage)
+        thread = threading.Timer(time, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
-    def on_white_screen_1(self):
+    def on_white_screen_1(self,time=2):
         self.current_stage = "white_screen_1"
         self._on_white_screen_1()
-        thread = threading.Timer(4, self.on_next_stage)
+        thread = threading.Timer(time, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
-    def on_rest_1(self):
+    def on_rest_1(self, time=5):
         self.current_stage = "rest_1"
         self._on_rest_1()
-        thread = threading.Timer(10, self.on_next_stage)
+        thread = threading.Timer(time, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
-    def on_look_at_image(self):
+    def on_look_at_image(self,time=6):
         self.current_stage = "look_at_image"
         if self.image_index < len(self.image_list):
             self._on_look_at_image()
-            thread = threading.Timer(4, self.on_next_stage)
+            thread = threading.Timer(time, self.on_next_stage)
             thread.daemon = True
             thread.start()
         else:
             self.on_stop()  # If no images left,
 
-    def on_rest_2(self):
+    def on_rest_2(self,time=5):
         self.current_stage = "rest_2"
         self._on_rest_2()
-        thread = threading.Timer(10, self.on_next_stage)
+        thread = threading.Timer(time, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
-    def on_close_eyes_imagine(self):
+    def on_close_eyes_imagine(self,time=4):
         self.current_stage = "close_eyes_imagine"
         self._on_close_eyes_imagine()
-        thread = threading.Timer(2, self.on_next_stage)
+        thread = threading.Timer(time, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
-    def on_white_screen_2(self):
+    def on_white_screen_2(self,time=2):
         self.current_stage = "white_screen_2"
         self._on_white_screen_2()
-        thread = threading.Timer(4, self.on_next_stage)
+        thread = threading.Timer(time, self.on_next_stage)
         thread.daemon = True
         thread.start()
 
-    def on_rest_3(self):
+    def on_rest_3(self,time=5):
         self.current_stage = "rest_3"
         self._on_rest_3()
         thread = threading.Timer(
-            10, self.on_next_stage
+            time, self.on_next_stage
         )  # Conclude the cycle and start the next one
         thread.daemon = True
         thread.start()
@@ -161,26 +161,45 @@ class Context:
             if (next_stage == "rest_1" or next_stage == "rest_2" or next_stage == "rest_3"):
                 self.random_trial_count+=1
 
+            print(f"Transitioning to: {next_stage}, train_index: {self.train_index}")
 
-        print(f"Transitioning to: {next_stage}, train_index: {self.train_index}")
+            if next_stage == "imagine":
+                self.on_imagine(3)
+            elif next_stage == "white_screen_1":
+                self.on_white_screen_1(1)
+            elif next_stage == "rest_1":
+                self.on_rest_1(5)
+            elif next_stage == "look_at_image":
+                self.on_look_at_image(3)
+            elif next_stage == "rest_2":
+                self.on_rest_2()
+            elif next_stage == "close_eyes_imagine":
+                self.on_close_eyes_imagine(3)
+            elif next_stage == "white_screen_2":
+                self.on_white_screen_2(1)
+            elif next_stage == "rest_3":
+                self.on_rest_3(5)
 
-        # Call the appropriate stage function
-        if next_stage == "imagine":
-            self.on_imagine()
-        elif next_stage == "white_screen_1":
-            self.on_white_screen_1()
-        elif next_stage == "rest_1":
-            self.on_rest_1()
-        elif next_stage == "look_at_image":
-            self.on_look_at_image()
-        elif next_stage == "rest_2":
-            self.on_rest_2()
-        elif next_stage == "close_eyes_imagine":
-            self.on_close_eyes_imagine()
-        elif next_stage == "white_screen_2":
-            self.on_white_screen_2()
-        elif next_stage == "rest_3":
-            self.on_rest_3()
+        else:
+            print(f"Transitioning to: {next_stage}, train_index: {self.train_index}")
+
+            # Call the appropriate stage function
+            if next_stage == "imagine":
+                self.on_imagine()
+            elif next_stage == "white_screen_1":
+                self.on_white_screen_1()
+            elif next_stage == "rest_1":
+                self.on_rest_1()
+            elif next_stage == "look_at_image":
+                self.on_look_at_image()
+            elif next_stage == "rest_2":
+                self.on_rest_2()
+            elif next_stage == "close_eyes_imagine":
+                self.on_close_eyes_imagine()
+            elif next_stage == "white_screen_2":
+                self.on_white_screen_2()
+            elif next_stage == "rest_3":
+                self.on_rest_3()
 
     def on_next_cycle(self):
 
@@ -190,9 +209,11 @@ class Context:
 
         if not self.in_random_cycle  and self.image_index < len(self.image_list):
             
-            self.current_stage = "cycle_complete"
-            self._on_cycle_complete()
-            print(f"Cycle ({self.cycle_count}) Complete - Waiting for User Input")
+            #self.current_stage = "cycle_complete"
+            #ctx._on_next_cycle()
+            self.on_next_stage()
+            #self._on_cycle_complete()
+            #print(f"Cycle ({self.cycle_count}) Complete - Waiting for User Input")
 
             # Now, the main event loop (update function) will handle user input (Y/N)
         elif self.in_random_cycle == False:
@@ -212,7 +233,8 @@ class Context:
 
         stages = [["imagine", "white_screen_1","rest_1"],
         ["look_at_image","rest_2"],
-        ["close_eyes_imagine","white_screen_2","rest_3"],]
+        #["close_eyes_imagine","white_screen_2","rest_3"],
+        ]
         random.seed(seed)
 
         if self.random_sequence == None:
@@ -324,14 +346,14 @@ def draw(screen, ctx, current_image=None):
         if current_image:
             image_name = os.path.splitext(os.path.basename(current_image))[0]
             show_text(screen, f"Imagine: {image_name}", font_size=40, align="center")
-            progress_bar(screen, 2)
+            #progress_bar(screen, 2)
 
     elif ctx.current_stage == "white_screen_1":
         screen.fill((240, 240, 240))
 
     elif ctx.current_stage in ["rest_1", "rest_2", "rest_3"]:
         screen.fill((221, 238, 255))  # Soft blue for rest
-        progress_bar(screen, 10)
+        progress_bar(screen, 5)
 
     elif ctx.current_stage == "look_at_image":
         screen.fill((240, 240, 240))
@@ -351,7 +373,7 @@ def draw(screen, ctx, current_image=None):
         if current_image:
             image_name = os.path.splitext(os.path.basename(current_image))[0]
             show_text(screen, f"Imagine: {image_name}", font_size=40, align="center")
-            progress_bar(screen, 2)
+            #progress_bar(screen, 2)
 
     elif ctx.current_stage == "white_screen_2":
         screen.fill((240, 240, 240))

@@ -94,19 +94,23 @@ def on_cycle_start():
 
 
 def create_train_sequence():
-    
-    sequence = ["baseline",
-        "imagine",
-        "white_screen_1",
-        "rest_1",
-        "look_at_image",
-        "rest_2",
-        "close_eyes_imagine",
-        "white_screen_2",
-        "rest_3",
-    ]
+    #add list of random trials here
+    # if none is provided random sequence of 6 trials is generated
+    sequence = None
 
     return sequence
+
+def create_priming_sequence():
+    return ["baseline",
+        "imagine",
+        "white_screen_1",
+        #"rest_1",
+        "look_at_image",
+        #"rest_2",
+        #"close_eyes_imagine",
+        #"white_screen_2",
+        #"rest_3",
+    ]
 
 
 # Main data collection function
@@ -125,7 +129,8 @@ def main():
         )
         return
 
-    sequence = create_train_sequence()
+    sequence = create_priming_sequence()
+    random_sequence = create_train_sequence()
     print("Sequence: ", sequence)
 
     image_list = [
@@ -136,7 +141,7 @@ def main():
 
     runPyGame(
         train_sequence=sequence,
-        random_sequence=None,
+        random_sequence=random_sequence,
         work_duration=15,
         rest_duration=10,
         image_list=image_list,

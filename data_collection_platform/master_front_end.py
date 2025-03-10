@@ -157,11 +157,12 @@ class Context:
 
         #update image if in random trial
         if self.in_random_cycle:
-            self.image_index = self.image_indices[self.random_trial_count]
-            if (next_stage == "rest_1" or next_stage == "rest_2" or next_stage == "rest_3"):
+            if (next_stage == "look_at_image" or next_stage == "imagine"):  
+                self.image_index = self.image_indices[self.random_trial_count]
                 self.random_trial_count+=1
 
-            print(f"Transitioning to: {next_stage}, train_index: {self.train_index}")
+            image_name = os.path.splitext(os.path.basename(self.image_list[self.image_index]))[0]
+            print(f"Transitioning to: {next_stage}, train_index: {self.train_index}, image: {image_name}")
 
             if next_stage == "imagine":
                 self.on_imagine(3)
@@ -227,20 +228,22 @@ class Context:
             self._on_stop()
 
 
-    def random_cycle(self,num_trials=6,seed=1):
+    def random_cycle(self,num_trials=6,num_rounds=6,seed=1):
         self.train_sequence = []
         self.image_indices = []
 
-        stages = [["imagine", "white_screen_1","rest_1"],
-        ["look_at_image","rest_2"],
+        stages = [["imagine", "white_screen_1"],
+        ["look_at_image"],
         #["close_eyes_imagine","white_screen_2","rest_3"],
         ]
         random.seed(seed)
 
         if self.random_sequence == None:
-            for i in range(num_trials):
-                self.image_indices.append(random.randint(0,len(self.image_list)-1))
-                self.train_sequence.extend(random.choice(stages))
+            for i in range(num_rounds):
+                for i in range(num_trials):
+                    self.image_indices.append(random.randint(0,len(self.image_list)-1))
+                    self.train_sequence.extend(random.choice(stages))
+                self.train_sequence.append("rest_3")
         else:
             self.train_sequence = self.random_sequence
             for stage in self.random_sequence:

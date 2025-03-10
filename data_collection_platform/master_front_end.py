@@ -165,17 +165,17 @@ class Context:
             print(f"Transitioning to: {next_stage}, train_index: {self.train_index}, image: {image_name}")
 
             if next_stage == "imagine":
-                self.on_imagine(3)
+                self.on_imagine(2)
             elif next_stage == "white_screen_1":
                 self.on_white_screen_1(1)
             elif next_stage == "rest_1":
                 self.on_rest_1(5)
             elif next_stage == "look_at_image":
-                self.on_look_at_image(3)
+                self.on_look_at_image(1)
             elif next_stage == "rest_2":
-                self.on_rest_2()
+                self.on_rest_2(5)
             elif next_stage == "close_eyes_imagine":
-                self.on_close_eyes_imagine(3)
+                self.on_close_eyes_imagine(2)
             elif next_stage == "white_screen_2":
                 self.on_white_screen_2(1)
             elif next_stage == "rest_3":

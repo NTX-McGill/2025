@@ -108,13 +108,10 @@ class Context:
 
     def on_look_at_image(self,time=6):
         self.current_stage = "look_at_image"
-        if self.image_index < len(self.image_list):
-            self._on_look_at_image()
-            thread = threading.Timer(time, self.on_next_stage)
-            thread.daemon = True
-            thread.start()
-        else:
-            self.on_stop()  # If no images left,
+        self._on_look_at_image()
+        thread = threading.Timer(time, self.on_next_stage)
+        thread.daemon = True
+        thread.start()
 
     def on_rest_2(self,time=5):
         self.current_stage = "rest_2"
@@ -171,7 +168,16 @@ class Context:
             elif next_stage == "rest_1":
                 self.on_rest_1(5)
             elif next_stage == "look_at_image":
-                self.on_look_at_image(1)
+                #add jitter 
+                time = random.randint(0,1)*0.05
+                print(f"waiting {time}")
+                if (time != 0):
+                    thread = threading.Timer(time, self.on_look_at_image,args=[1]) 
+                    thread.daemon = True
+                    thread.start()
+                else:
+                    self.on_look_at_image(1)
+                
             elif next_stage == "rest_2":
                 self.on_rest_2(5)
             elif next_stage == "close_eyes_imagine":
@@ -441,8 +447,8 @@ def update(ctx):
                     ctx.on_instruction_screen()
                 elif ctx.current_stage == "instruction_screen":
                     ctx.on_baseline()
-                elif ctx.current_stage == "baseline":
-                    ctx.on_next_stage()
+                #elif ctx.current_stage == "baseline":
+                 #   ctx.on_next_stage()
             elif event.key == pygame.K_y: 
                 if ctx.current_stage == "cycle_complete":
                     print("User selected 'Yes'. Continuing to next cycle.")

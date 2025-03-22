@@ -1,7 +1,6 @@
 import datetime
 import logging
 import pathlib
-import random
 from backend.csv_data_recorder import CSVDataRecorder
 from backend.marker_outlet import MarkerOutlet
 from master_front_end import runPyGame
@@ -86,6 +85,7 @@ def on_close_eyes_imagine():
 
 
 def on_cycle_complete():
+    marker_outlet.send_transition(STATUS_TRANSITION)
     collector.pause()
 
 

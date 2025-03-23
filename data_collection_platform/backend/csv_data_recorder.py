@@ -148,6 +148,10 @@ class CSVDataRecorder:
         self.eeg_inlet.flush()
         self.marker_inlet.flush()
 
+        self._save_buffer(
+            filename, timestamp_list, channel_lists, image_id_list, status_list
+        )
+
         while self.recording:
             # PROBLEM - we need to merge the two (EEG and Marker) LSL streams into one
             # Assume we never get two markers for one EEG sample

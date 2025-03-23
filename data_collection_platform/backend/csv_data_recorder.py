@@ -162,7 +162,12 @@ class CSVDataRecorder:
                 continue
 
             eeg_sample, eeg_timestamp = self.eeg_inlet.pull_sample()
-            marker_sample, _ = self.marker_inlet.pull_sample(0.0)
+            marker_sample, marker_timestamp = self.marker_inlet.pull_sample(0.0)
+
+            if marker_sample is not None:
+                print(
+                    f"eeg_timestamp: {eeg_timestamp}, marker_timestamp: {marker_timestamp}, delta={eeg_timestamp-marker_timestamp}"
+                )
 
             if marker_sample is not None and marker_sample[0] is not None:
                 has_new_image, new_image, has_new_status, new_status = marker_sample
@@ -170,6 +175,10 @@ class CSVDataRecorder:
                     image = new_image
                 if has_new_status:
                     status = new_status
+
+            # If there is a marker sample available after we already pulled one, then the assuption that there is only one marker sample per EEG sample has been broken.
+            if self.marker_inlet.samples_available():
+                print("warning: multiple marker samples found for 1 eeg sample")
 
             image_id_list = np.append(image_id_list, image)
             status_list = np.append(status_list, status)

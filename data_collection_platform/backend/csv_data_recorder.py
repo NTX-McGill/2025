@@ -132,24 +132,32 @@ class CSVDataRecorder:
         This function should not be called directly. Use start() instead.
         """
 
-        timestamp_list = np.array([])
+        eeg_timestamp_list = np.array([])
         channel_lists: typing.List[np.ndarray] = list()
-        image_id_list = np.array([], dtype=np.int8)
-        status_list = np.array([], dtype=np.int8)
-
         for i in range(8):
             channel_lists.append(np.array([]))
 
-        buffer_size = 0
-        status = STATUS_TRANSITION
-        image = IMAGE_NONE
+        marker_timestamp_list = np.array([])
+        has_new_image_list = np.array([])
+        new_image_list = np.array([])
+        has_new_status_list = np.array([])
+        new_status_list = np.array([])
+
+        eeg_buffer_size = 0
 
         # Flush the inlets to remove old data
         self.eeg_inlet.flush()
         self.marker_inlet.flush()
 
         self._save_buffer(
-            filename, timestamp_list, channel_lists, image_id_list, status_list
+            filename,
+            eeg_timestamp_list,
+            marker_timestamp_list,
+            channel_lists,
+            has_new_image_list,
+            new_image_list,
+            has_new_status_list,
+            new_status_list,
         )
 
         while self.recording:
@@ -165,57 +173,93 @@ class CSVDataRecorder:
             marker_sample, marker_timestamp = self.marker_inlet.pull_sample(0.0)
 
             if marker_sample is not None:
+                # print("recieved", self.t+marker_timestamp)
                 print(
                     f"eeg_timestamp: {eeg_timestamp}, marker_timestamp: {marker_timestamp}, delta={eeg_timestamp-marker_timestamp}"
                 )
 
             if marker_sample is not None and marker_sample[0] is not None:
                 has_new_image, new_image, has_new_status, new_status = marker_sample
-                if has_new_image:
-                    image = new_image
-                if has_new_status:
-                    status = new_status
+
+                marker_timestamp_list = np.append(
+                    marker_timestamp_list, marker_timestamp
+                )
+                has_new_image_list = np.append(has_new_image_list, has_new_image)
+                new_image_list = np.append(new_image_list, new_image)
+                has_new_status_list = np.append(has_new_status_list, has_new_status)
+                new_status_list = np.append(new_status_list, new_status)
 
             # If there is a marker sample available after we already pulled one, then the assuption that there is only one marker sample per EEG sample has been broken.
             if self.marker_inlet.samples_available():
                 print("warning: multiple marker samples found for 1 eeg sample")
 
-            image_id_list = np.append(image_id_list, image)
-            status_list = np.append(status_list, status)
-            timestamp_list = np.append(timestamp_list, eeg_timestamp)
+            eeg_timestamp_list = np.append(eeg_timestamp_list, eeg_timestamp)
             for i in range(8):
                 channel_lists[i] = np.append(channel_lists[i], eeg_sample[i])
 
-            buffer_size += 1
-            if buffer_size >= 16384:
+            eeg_buffer_size += 1
+            if eeg_buffer_size >= 16384:
                 threading.Thread(
                     target=self._save_buffer,
                     args=[
                         filename,
-                        timestamp_list,
+                        eeg_timestamp_list,
+                        marker_timestamp_list,
                         channel_lists,
-                        image_id_list,
-                        status_list,
+                        has_new_image_list,
+                        new_image_list,
+                        has_new_status_list,
+                        new_status_list,
                     ],
                 ).start()
-                buffer_size = 0
-                timestamp_list = np.array([])
+
+                eeg_buffer_size = 0
+
+                eeg_timestamp_list = np.array([])
                 channel_lists: typing.List[np.ndarray] = list()
-                image_id_list = np.array([], dtype=np.int8)
-                status_list = np.array([], dtype=np.int8)
                 for i in range(8):
                     channel_lists.append(np.array([]))
 
-        print(timestamp_list)
+                marker_timestamp_list = np.array([])
+                has_new_image_list = np.array([])
+                new_image_list = np.array([])
+                has_new_status_list = np.array([])
+                new_status_list = np.array([])
+
+                print(eeg_timestamp_list)
         self._save_buffer(
-            filename, timestamp_list, channel_lists, image_id_list, status_list
+            filename,
+            eeg_timestamp_list,
+            marker_timestamp_list,
+            channel_lists,
+            has_new_image_list,
+            new_image_list,
+            has_new_status_list,
+            new_status_list,
         )
 
-    def _save_buffer(
-        self, filename, timestamp_list, channel_lists, image_id_list, status_list
-    ):
+        filepath_eeg = Path(f"collected_data/eeg_{filename}")
+        filepath_marker = Path(f"collected_data/markers_{filename}")
+        filepath_merged = Path(f"collected_data/{filename}")
 
-        df = pd.DataFrame(
+        eeg_df = pd.read_csv(filepath_eeg)
+        marker_df = pd.read_csv(filepath_marker)
+
+        merged = self.merge_eeg_and_marker_dfs(eeg_df, marker_df)
+        merged.to_csv(filepath_merged, index=False)
+
+    def _save_buffer(
+        self,
+        filename,
+        eeg_timestamp_list,
+        marker_timestamp_list,
+        channel_lists,
+        has_new_image_list,
+        new_image_list,
+        has_new_status_list,
+        new_status_list,
+    ):
+        eeg_df = pd.DataFrame(
             columns=[
                 "timestamp",
                 "ch1",
@@ -226,34 +270,110 @@ class CSVDataRecorder:
                 "ch6",
                 "ch7",
                 "ch8",
-                "image_id",
-                "status",
             ]
         )
 
-        df["timestamp"] = timestamp_list
-        for i in range(8):
-            df[f"ch{i+1}"] = channel_lists[i]
-
-        df["transition"] = (status_list == STATUS_TRANSITION).astype(int)
-        df["baseline"] = (status_list == STATUS_BASELINE).astype(int)
-        df["imagine"] = (status_list == STATUS_IMAGINE).astype(int)
-        df["look"] = (status_list == STATUS_LOOK).astype(int)
-        df["imagine_eyes_closed"] = (status_list == STATUS_IMAGINE_EYES_CLOSED).astype(
-            int
+        marker_df = pd.DataFrame(
+            columns=[
+                "timestamp",
+                "has_new_image",
+                "new_image",
+                "has_new_status",
+                "new_status",
+            ]
         )
-        df["done"] = (status_list == STATUS_DONE).astype(int)
+
+        eeg_df["timestamp"] = eeg_timestamp_list
+        for i in range(8):
+            eeg_df[f"ch{i+1}"] = channel_lists[i]
+
+        marker_df["timestamp"] = marker_timestamp_list
+        marker_df["has_new_image"] = has_new_image_list.astype("int")
+        marker_df["new_image"] = new_image_list.astype("int")
+        marker_df["has_new_status"] = has_new_status_list.astype("int")
+        marker_df["new_status"] = new_status_list.astype("int")
+
+        filepath_eeg = Path(f"collected_data/eeg_{filename}")
+        filepath_marker = Path(f"collected_data/markers_{filename}")
+
+        filepath_eeg.parent.mkdir(parents=True, exist_ok=True)
+
+        eeg_df.to_csv(
+            filepath_eeg,
+            mode="a",
+            index=False,
+            header=(not os.path.exists(filepath_eeg)),
+        )
+
+        marker_df.to_csv(
+            filepath_marker,
+            mode="a",
+            index=False,
+            header=(not os.path.exists(filepath_marker)),
+        )
+
+    # TODO: write buffered version of function
+    def merge_eeg_and_marker_dfs(self, eeg_df: pd.DataFrame, marker_df: pd.DataFrame):
+        merged = pd.DataFrame(
+            columns=[
+                "timestamp",
+                "ch1",
+                "ch2",
+                "ch3",
+                "ch4",
+                "ch5",
+                "ch6",
+                "ch7",
+                "ch8",
+                "status",
+                "image_id",
+            ]
+        )
+
+        merged["timestamp"] = eeg_df["timestamp"]
+        for i in range(8):
+            merged[f"ch{i+1}"] = eeg_df[f"ch{i+1}"]
+
+        merged["status"] = np.repeat(-100, len(merged["timestamp"]))
+        merged["image_id"] = np.repeat(-100, len(merged["timestamp"]))
+        merged = merged.reset_index()
+        marker_new_image_rows = marker_df[marker_df["has_new_image"] == 1]
+        marker_new_status_rows = marker_df[marker_df["has_new_status"] == 1]
+
+        current_image = IMAGE_NONE
+        prev_eeg_index = 0
+        for row in marker_new_image_rows.itertuples():
+            timestamp = row.timestamp
+            eeg_index = merged[merged["timestamp"] > timestamp].iloc[0]["index"]
+            merged.loc[prev_eeg_index : eeg_index - 1, "image_id"] = current_image
+            prev_eeg_index = eeg_index
+            current_image = row.new_image
+        merged.loc[eeg_index:, "image_id"] = current_image
+
+        current_status = STATUS_TRANSITION
+        prev_eeg_index = 0
+        for row in marker_new_status_rows.itertuples():
+            timestamp = row.timestamp
+            eeg_index = merged[merged["timestamp"] > timestamp].iloc[0]["index"]
+            merged.loc[prev_eeg_index : eeg_index - 1, "status"] = current_status
+            prev_eeg_index = eeg_index
+            current_status = row.new_status
+        merged.loc[eeg_index:, "image_id"] = current_status
+
+        merged["transition"] = (merged["status"] == STATUS_TRANSITION).astype(int)
+        merged["baseline"] = (merged["status"] == STATUS_BASELINE).astype(int)
+        merged["imagine"] = (merged["status"] == STATUS_IMAGINE).astype(int)
+        merged["look"] = (merged["status"] == STATUS_LOOK).astype(int)
+        merged["imagine_eyes_closed"] = (
+            merged["status"] == STATUS_IMAGINE_EYES_CLOSED
+        ).astype(int)
+        merged["done"] = (merged["status"] == STATUS_DONE).astype(int)
 
         for i in range(self.num_imgs):
-            df[f"image_{i}"] = (image_id_list == i).astype(int)
-        df["image_none"] = (image_id_list == IMAGE_NONE).astype(int)
+            merged[f"image_{i}"] = (merged["image_id"] == i).astype(int)
+        merged["image_none"] = (merged["image_id"] == IMAGE_NONE).astype(int)
 
-        filepath = Path(f"collected_data/{filename}")
-        filepath.parent.mkdir(parents=True, exist_ok=True)
-
-        df.to_csv(
-            filepath, mode="a", index=False, header=(not os.path.exists(filepath))
-        )
+        return merged
 
     def pause(self):
         self.paused = True

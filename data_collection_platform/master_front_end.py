@@ -169,7 +169,7 @@ class Context:
                 self.on_rest_1(5)
             elif next_stage == "look_at_image":
                 #add jitter 
-                time = random.randint(0,1)*0.05
+                time = random.randint(0,2)*0.05
                 print(f"waiting {time}")
                 if (time != 0):
                     thread = threading.Timer(time, self.on_look_at_image,args=[1]) 
